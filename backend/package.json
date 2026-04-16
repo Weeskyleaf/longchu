@@ -1,0 +1,21 @@
+{
+  "name": "nuclear-hf-database-backend",
+  "version": "1.0.0",
+  "description": "核电人因数据库系统后端服务",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5",
+    "better-sqlite3": "^11.6.0",
+    "body-parser": "^1.20.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.7.7",
+    "morgan": "^1.10.0"
+  }
+}
