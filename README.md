@@ -40,30 +40,47 @@ Nuclear Power Human Factors Database System
 
 ---
 
-## 环境准备（macOS）
+## 环境准备
 
-### 1. 安装 Node.js
+> V1 不需要 Java、Maven 或 MySQL。使用 SQLite 数据库，零配置。
+
+### macOS
 
 ```bash
+# 安装 Node.js
 brew install node
-
-# 验证
 node -v   # 应显示 v16+
-npm -v    # 应显示 9+
-```
 
-### 2. 安装 Python 3
-
-```bash
-# macOS 通常自带，如果没有：
+# 安装 Python 3（macOS 通常自带）
 brew install python3
-
-# 验证
 python3 --version   # 应显示 Python 3.9+
-pip3 --version
 ```
 
-> 不需要安装 Java、Maven 或 MySQL。V1 使用 SQLite 数据库，零配置。
+### Windows
+
+**安装 Node.js：**
+
+从 [Node.js 官网](https://nodejs.org/) 下载 LTS 版本安装包（.msi），默认安装即可。
+
+验证（打开新的命令提示符）：
+
+```cmd
+node -v
+npm -v
+```
+
+**安装 Python 3：**
+
+从 [Python 官网](https://www.python.org/downloads/) 下载安装包，**安装时务必勾选 "Add Python to PATH"**。
+
+验证：
+
+```cmd
+python --version
+pip --version
+```
+
+> Windows 下使用 `python` 和 `pip` 命令（不带 `3` 后缀）。
 
 ---
 
@@ -80,24 +97,24 @@ cd longchu
 
 ### 第二步：安装依赖
 
+**macOS / Linux：**
+
 ```bash
-# 1. 后端依赖
-cd backend
-npm install
-cd ..
-
-# 2. SPAR-H 计算服务依赖
-cd spar-h-service
-pip3 install -r requirements.txt
-cd ..
-
-# 3. 前端依赖
-cd frontend
-npm install
-cd ..
+cd backend && npm install && cd ..
+cd spar-h-service && pip3 install -r requirements.txt && cd ..
+cd frontend && npm install && cd ..
 ```
 
-> 如果 `npm install` 在 backend 报 `node-gyp` 错误，先运行 `pip3 install setuptools` 再重试。
+**Windows：**
+
+```cmd
+cd backend && npm install && cd ..
+cd spar-h-service && pip install -r requirements.txt && cd ..
+cd frontend && npm install && cd ..
+```
+
+> macOS 上如果 `npm install` 报 `node-gyp` 错误，先运行 `pip3 install setuptools` 再重试。
+> Windows 上如果报 node-gyp 错误，运行 `npm install --global windows-build-tools`。
 
 ### 第三步：启动服务（需要 3 个终端窗口）
 
@@ -105,13 +122,11 @@ cd ..
 
 ```bash
 cd spar-h-service
-python3 app.py
+python3 app.py          # macOS/Linux
+python app.py           # Windows
 ```
 
-看到以下输出表示成功：
-```
- * Running on http://127.0.0.1:5001
-```
+看到 `Running on http://127.0.0.1:5001` 表示成功。
 
 **终端 2 — 启动后端 API 服务（端口 3000）**
 
@@ -120,13 +135,7 @@ cd backend
 npm start
 ```
 
-看到以下输出表示成功：
-```
-核电人因数据库后端服务已启动 → http://localhost:3000
-数据库已就绪，共 10 条事件记录
-```
-
-> 首次启动会自动创建 SQLite 数据库文件 `backend/data/nuclear_hf.db`，并导入种子数据。
+看到 `数据库已就绪，共 10 条事件记录` 表示成功。首次启动自动创建 SQLite 数据库。
 
 **终端 3 — 启动前端开发服务器（端口 8080）**
 
@@ -135,11 +144,7 @@ cd frontend
 npm run dev
 ```
 
-看到以下输出表示成功：
-```
-VITE ready in xxx ms
-➜  Local:   http://127.0.0.1:8080/
-```
+看到 `Local: http://127.0.0.1:8080/` 表示成功。
 
 ### 第四步：访问系统
 
@@ -271,24 +276,66 @@ longchu/
 
 ### Q: `npm install` 报 node-gyp / distutils 错误
 
+**macOS/Linux：**
+
 ```bash
 pip3 install setuptools
 cd backend && rm -rf node_modules && npm install
 ```
 
+**Windows：**
+
+```cmd
+npm install --global windows-build-tools
+cd backend && rmdir /s /q node_modules && npm install
+```
+
+或安装 [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选"C++ 生成工具"。
+
 ### Q: 端口被占用
 
+**macOS/Linux：**
+
 ```bash
-lsof -ti:3000 | xargs kill -9   # 后端
-lsof -ti:5001 | xargs kill -9   # Flask
-lsof -ti:8080 | xargs kill -9   # 前端
+lsof -ti:3000 | xargs kill -9
+lsof -ti:5001 | xargs kill -9
+lsof -ti:8080 | xargs kill -9
+```
+
+**Windows（管理员 CMD）：**
+
+```cmd
+netstat -ano | findstr :3000
+taskkill /PID <PID号> /F
+
+netstat -ano | findstr :5001
+taskkill /PID <PID号> /F
+
+netstat -ano | findstr :8080
+taskkill /PID <PID号> /F
+```
+
+### Q: Windows 上 python3 命令不存在
+
+Windows 安装 Python 后命令是 `python` 而非 `python3`，`pip` 而非 `pip3`。启动 Flask 用：
+
+```cmd
+python app.py
 ```
 
 ### Q: 想重置数据库
 
+**macOS/Linux：**
+
 ```bash
 rm backend/data/nuclear_hf.db
 # 重启后端会自动重新创建
+```
+
+**Windows：**
+
+```cmd
+del backend\data\nuclear_hf.db
 ```
 
 ### Q: 如何切换到 V2（Spring Boot）版本
