@@ -162,18 +162,18 @@
           style="width: 100%"
           :row-class-name="tableRowClass"
         >
-          <el-table-column prop="event_no" label="事件编号" width="130">
+          <el-table-column prop="event_code" label="事件编号" width="130">
             <template #default="{ row }">
-              <span class="event-no-link">{{ row.event_no }}</span>
+              <span class="event-no-link">{{ row.event_code }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="event_title" label="事件名称/简述" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
               <div>{{ row.event_title }}</div>
               <el-progress
-                :percentage="row.completeness ?? 0"
+                :percentage="95"
                 :stroke-width="4"
-                :color="completenessColor(row.completeness)"
+                color="#409EFF"
                 :show-text="false"
                 style="margin-top: 4px"
               />
@@ -186,17 +186,21 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="task_phase" label="任务阶段" width="90" align="center">
+          <el-table-column prop="main_category" label="任务阶段" width="90" align="center">
             <template #default="{ row }">
-              <span>{{ row.task_phase || '--' }}</span>
+              <span>{{ row.main_category || '--' }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="unit_no" label="电厂/机组" width="90" align="center">
+          <el-table-column prop="plant_name" label="电厂/机组" width="120" align="center">
             <template #default="{ row }">
-              <span>{{ row.unit_no ? `${row.unit_no}号机组` : '--' }}</span>
+              <span>{{ row.plant_name ? `${row.plant_name} ${row.unit_no}` : '--' }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="occur_time" label="发生时间" width="110" />
+          <el-table-column prop="occur_time" label="发生时间" width="170">
+            <template #default="{ row }">
+              {{ row.occur_time ? row.occur_time.replace('T', ' ').substring(0, 16) : '--' }}
+            </template>
+          </el-table-column>
         </el-table>
         <div class="pagination-bar">
           <el-pagination
@@ -219,7 +223,7 @@
         </div>
         <div v-if="selectedEvent" class="preview-content">
           <h3 class="preview-event-title">{{ selectedEvent.event_title }}</h3>
-          <div class="preview-event-no">{{ selectedEvent.event_no }}</div>
+          <div class="preview-event-no">{{ selectedEvent.event_code }}</div>
           <el-divider />
           <div class="preview-field">
             <span class="preview-label">事件类型</span>
@@ -229,11 +233,11 @@
           </div>
           <div class="preview-field">
             <span class="preview-label">任务阶段</span>
-            <span class="preview-value">{{ selectedEvent.task_phase || '--' }}</span>
+            <span class="preview-value">{{ selectedEvent.main_category || '--' }}</span>
           </div>
           <div class="preview-field">
             <span class="preview-label">机组信息</span>
-            <span class="preview-value">{{ selectedEvent.unit_no ? `${selectedEvent.unit_no}号机组` : '--' }}</span>
+            <span class="preview-value">{{ selectedEvent.plant_name ? `${selectedEvent.plant_name} ${selectedEvent.unit_no}` : '--' }}</span>
           </div>
           <div class="preview-field">
             <span class="preview-label">发生时间</span>
@@ -247,7 +251,7 @@
           </div>
           <el-divider />
           <div class="preview-desc-label">事件描述</div>
-          <p class="preview-desc">{{ selectedEvent.event_summary || '暂无描述信息' }}</p>
+          <p class="preview-desc">{{ selectedEvent.raw_text ? selectedEvent.raw_text.substring(0, 150) + '...' : '暂无描述信息' }}</p>
           <el-button
             type="primary"
             style="width: 100%; margin-top: 16px"
