@@ -1,6 +1,5 @@
 <template>
   <div class="evidence-page" v-loading="loading">
-    <!-- 顶部标签导航 -->
     <div class="tab-bar">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="证据链管理" name="evidence" />
@@ -11,7 +10,6 @@
       </el-tabs>
     </div>
 
-    <!-- 标题栏 -->
     <div class="title-bar">
       <h2 class="page-title">证据链与追溯模块</h2>
       <div class="title-actions">
@@ -22,24 +20,26 @@
       </div>
     </div>
 
-    <!-- 信息卡片 -->
     <el-row :gutter="16" class="info-cards">
       <el-col :span="8">
         <div class="info-card">
           <span class="info-label">当前事件</span>
-          <span class="info-value code">{{ eventData.event_no || '—' }}</span>
+          <span class="info-value code">{{ eventData.event_no || eventData.event_code || '—' }}</span>
+          <span class="info-desc">关联事件编号</span>
         </div>
       </el-col>
       <el-col :span="8">
         <div class="info-card">
           <span class="info-label">证据总数</span>
           <span class="info-value">{{ evidenceList.length }}</span>
+          <span class="info-desc">已登记证据条目</span>
         </div>
       </el-col>
       <el-col :span="8">
         <div class="info-card">
           <span class="info-label">当前版本</span>
           <span class="info-value">{{ currentVersion }}</span>
+          <span class="info-desc">证据链版本号</span>
         </div>
       </el-col>
     </el-row>
@@ -48,25 +48,26 @@
         <div class="info-card">
           <span class="info-label">证据完整度</span>
           <span class="info-value highlight">{{ completeness }}%</span>
+          <span class="info-desc">各维度校验综合评估</span>
         </div>
       </el-col>
       <el-col :span="8">
         <div class="info-card">
           <span class="info-label">审核状态</span>
           <el-tag :type="auditStatusType" size="large" class="info-tag">{{ auditStatus }}</el-tag>
+          <span class="info-desc">当前审核流程状态</span>
         </div>
       </el-col>
       <el-col :span="8">
         <div class="info-card">
           <span class="info-label">最近操作</span>
           <span class="info-value small">{{ latestOperation }}</span>
+          <span class="info-desc">最近一次变更记录</span>
         </div>
       </el-col>
     </el-row>
 
-    <!-- 双栏主体 -->
     <el-row :gutter="20">
-      <!-- 左栏：来源与证据登记 -->
       <el-col :span="12">
         <div class="panel">
           <div class="panel-head">
@@ -101,13 +102,7 @@
               </el-col>
               <el-col :span="12">
                 <el-form-item label="类型日期">
-                  <el-date-picker
-                    v-model="form.docDate"
-                    type="date"
-                    placeholder="选择日期"
-                    style="width: 100%"
-                    value-format="YYYY-MM-DD"
-                  />
+                  <el-date-picker v-model="form.docDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -131,12 +126,7 @@
             </el-row>
 
             <el-form-item label="证据内容">
-              <el-input
-                v-model="form.content"
-                type="textarea"
-                :rows="5"
-                placeholder="请输入证据详细内容描述..."
-              />
+              <el-input v-model="form.content" type="textarea" :rows="5" placeholder="请输入证据详细内容描述..." />
             </el-form-item>
 
             <div class="form-actions">
@@ -147,7 +137,6 @@
         </div>
       </el-col>
 
-      <!-- 右栏：追溯完整度评估 -->
       <el-col :span="12">
         <div class="panel">
           <div class="panel-head">
@@ -159,7 +148,7 @@
             <div v-for="item in progressItems" :key="item.label" class="progress-item">
               <div class="progress-top">
                 <span class="progress-label">{{ item.label }}</span>
-                <span class="progress-pct">{{ item.pct }}%</span>
+                <span class="progress-pct" :style="{ color: item.pct >= 100 ? '#10b981' : item.pct >= 60 ? '#f59e0b' : '#ef4444' }">{{ item.pct }}%</span>
               </div>
               <el-progress
                 :percentage="item.pct"
@@ -170,7 +159,6 @@
             </div>
           </div>
 
-          <!-- 操作日志 -->
           <div class="log-section">
             <h4 class="log-title">通模操作日志</h4>
             <div class="log-list">
@@ -187,7 +175,6 @@
       </el-col>
     </el-row>
 
-    <!-- 底部：审核操作日志 -->
     <div class="panel" style="margin-top: 20px">
       <div class="panel-head">
         <h3 class="section-title">审核操作日志</h3>
@@ -291,7 +278,7 @@ async function fetchEventData() {
     const d = res.data || {}
     eventData.value = d
     evidenceList.value = d.evidence || []
-    if (d.event_no) form.relatedEventNo = d.event_no
+    if (d.event_no || d.event_code) form.relatedEventNo = d.event_no || d.event_code
     if (d.evidence?.length) {
       const latest = d.evidence[d.evidence.length - 1]
       currentVersion.value = latest.version_info || 'V1.3'
@@ -319,13 +306,11 @@ onMounted(fetchEventData)
   padding: 0 24px;
   border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
-
 .tab-bar :deep(.el-tabs__header) {
   margin: 0;
 }
-
 .tab-bar :deep(.el-tabs__nav-wrap::after) {
   height: 1px;
 }
@@ -337,101 +322,92 @@ onMounted(fetchEventData)
   margin-bottom: 20px;
   padding: 0 4px;
 }
-
 .page-title {
   font-size: 22px;
   font-weight: 700;
   color: #1a365d;
   margin: 0;
 }
-
 .title-actions {
   display: flex;
   gap: 8px;
 }
 
-/* 信息卡片 */
 .info-cards {
   margin-bottom: 16px;
 }
-
 .info-card {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   min-height: 90px;
   justify-content: center;
+  gap: 4px;
 }
-
 .info-label {
   font-size: 12px;
   color: #909399;
-  margin-bottom: 8px;
 }
-
 .info-value {
   font-size: 28px;
   font-weight: 700;
   color: #1a365d;
   line-height: 1.3;
 }
-
 .info-value.code {
   font-size: 18px;
   font-family: 'Courier New', monospace;
   letter-spacing: 1px;
 }
-
 .info-value.highlight {
   color: #10b981;
 }
-
 .info-value.small {
   font-size: 14px;
   font-weight: 500;
   color: #4a5568;
 }
-
+.info-desc {
+  font-size: 12px;
+  color: #b0b8c4;
+}
 .info-tag {
   margin-top: 4px;
 }
 
-/* 面板 */
 .panel {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
-
 .panel-head {
   margin-bottom: 20px;
 }
-
 .section-title {
   font-size: 16px;
   font-weight: 700;
   color: #1a365d;
   margin: 0 0 4px;
+  padding-left: 12px;
+  border-left: 3px solid #1a365d;
 }
-
 .section-sub {
   font-size: 13px;
   color: #909399;
   margin: 0;
+  padding-left: 12px;
 }
 
-/* 表单 */
 .evidence-form :deep(.el-form-item__label) {
   font-weight: 600;
   color: #4a5568;
 }
-
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -439,63 +415,51 @@ onMounted(fetchEventData)
   margin-top: 8px;
 }
 
-/* 完整度进度 */
 .progress-list {
   margin-bottom: 28px;
 }
-
 .progress-item {
   margin-bottom: 18px;
 }
-
 .progress-item:last-child {
   margin-bottom: 0;
 }
-
 .progress-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
 }
-
 .progress-label {
   font-size: 14px;
   color: #4a5568;
   font-weight: 500;
 }
-
 .progress-pct {
   font-size: 14px;
   font-weight: 700;
-  color: #10b981;
 }
 
-/* 操作日志 */
 .log-section {
   border-top: 1px solid #ebeef5;
   padding-top: 20px;
 }
-
 .log-title {
   font-size: 15px;
   font-weight: 600;
   color: #1a365d;
   margin: 0 0 16px;
 }
-
 .log-list {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
-
 .log-entry {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
-
 .log-dot {
   width: 8px;
   height: 8px;
@@ -504,18 +468,15 @@ onMounted(fetchEventData)
   margin-top: 6px;
   flex-shrink: 0;
 }
-
 .log-body {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-
 .log-text {
   font-size: 13px;
   color: #4a5568;
 }
-
 .log-time {
   font-size: 12px;
   color: #a0aec0;

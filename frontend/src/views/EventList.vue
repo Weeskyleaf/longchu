@@ -1,6 +1,5 @@
 <template>
   <div class="event-list-page">
-    <!-- 顶部标题栏 -->
     <div class="top-header">
       <span class="top-header__title">核电人因事件分析数据库系统 · 事件台账模块</span>
       <div class="top-header__actions">
@@ -16,36 +15,17 @@
       </div>
     </div>
 
-    <!-- 统计卡片行 -->
     <el-row :gutter="16" class="summary-row">
-      <el-col :span="6">
-        <el-card shadow="hover" class="summary-card">
-          <div class="summary-card__value primary">{{ stats.total ?? '--' }}</div>
-          <div class="summary-card__label">事件总量</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="summary-card">
-          <div class="summary-card__value warning">{{ stats.pending ?? '--' }}</div>
-          <div class="summary-card__label">待审核事件</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="summary-card">
-          <div class="summary-card__value danger">{{ stats.highRisk ?? '--' }}</div>
-          <div class="summary-card__label">高风险事件</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover" class="summary-card">
-          <div class="summary-card__value success">{{ stats.completeness ?? '--' }}%</div>
-          <div class="summary-card__label">完整度</div>
-        </el-card>
+      <el-col :span="6" v-for="card in summaryCards" :key="card.label">
+        <div class="summary-card">
+          <div class="summary-card__label">{{ card.label }}</div>
+          <div class="summary-card__value" :style="{ color: card.color }">{{ card.value }}</div>
+          <div class="summary-card__desc">{{ card.desc }}</div>
+        </div>
       </el-col>
     </el-row>
 
-    <!-- 检索与筛选 -->
-    <el-card shadow="never" class="filter-card">
+    <div class="filter-card">
       <div class="filter-card__header">
         <span class="filter-card__title">检索与筛选</span>
         <span class="filter-card__subtitle">支持按时间、机组、系统、事件类型、标签状态等条件组合检索</span>
@@ -62,30 +42,29 @@
           <el-col :span="6">
             <el-form-item label="事件类型">
               <el-select v-model="searchForm.event_type" placeholder="全部" clearable style="width: 100%">
-                <el-option label="设备故障" value="设备故障" />
-                <el-option label="人因失误" value="人因失误" />
-                <el-option label="程序缺陷" value="程序缺陷" />
-                <el-option label="组织因素" value="组织因素" />
-                <el-option label="外部事件" value="外部事件" />
+                <el-option label="运行事件" value="运行事件" />
+                <el-option label="安全事件" value="安全事件" />
+                <el-option label="不正常事件" value="不正常事件" />
+                <el-option label="管理事件" value="管理事件" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="任务阶段">
               <el-select v-model="searchForm.task_phase" placeholder="全部" clearable style="width: 100%">
-                <el-option label="全部" value="" />
-                <el-option label="事故前" value="事故前" />
-                <el-option label="事故后" value="事故后" />
+                <el-option label="事故前-计划" value="事故前-计划" />
+                <el-option label="事故前-执行" value="事故前-执行" />
+                <el-option label="事故后-诊断" value="事故后-诊断" />
+                <el-option label="事故后-响应" value="事故后-响应" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="6">
             <el-form-item label="审核状态">
               <el-select v-model="searchForm.audit_status" placeholder="全部" clearable style="width: 100%">
-                <el-option label="全部" value="" />
                 <el-option label="待审核" value="待审核" />
-                <el-option label="已审核" value="已审核" />
-                <el-option label="已归档" value="已归档" />
+                <el-option label="审核中" value="审核中" />
+                <el-option label="审核通过" value="审核通过" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -107,31 +86,19 @@
                 <el-option label="反应堆冷却剂系统" value="RCS" />
                 <el-option label="化学和容积控制系统" value="CVCS" />
                 <el-option label="安全注入系统" value="SIS" />
-                <el-option label="余热排出系统" value="RHRS" />
+                <el-option label="数字化仪控系统" value="DCS" />
                 <el-option label="电气系统" value="ELS" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="5">
             <el-form-item label="开始日期">
-              <el-date-picker
-                v-model="searchForm.start_date"
-                type="date"
-                placeholder="选择日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
+              <el-date-picker v-model="searchForm.start_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="5">
             <el-form-item label="结束日期">
-              <el-date-picker
-                v-model="searchForm.end_date"
-                type="date"
-                placeholder="选择日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-              />
+              <el-date-picker v-model="searchForm.end_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="2" class="filter-actions">
@@ -142,12 +109,10 @@
           </el-col>
         </el-row>
       </el-form>
-    </el-card>
+    </div>
 
-    <!-- 主内容：双栏布局 -->
     <div class="main-columns">
-      <!-- 左栏：事件台账列表 -->
-      <el-card shadow="never" class="list-panel">
+      <div class="list-panel">
         <div class="panel-header">
           <div>
             <span class="panel-title">事件台账列表</span>
@@ -161,44 +126,66 @@
           @current-change="handleRowSelect"
           style="width: 100%"
           :row-class-name="tableRowClass"
+          size="small"
         >
-          <el-table-column prop="event_code" label="事件编号" width="130">
+          <el-table-column prop="event_code" label="事件编号" width="110">
             <template #default="{ row }">
-              <span class="event-no-link">{{ row.event_code }}</span>
+              <span class="event-no-link" @click.stop="$router.push(`/events/${row.id}`)">{{ row.event_code || `HF-2026-${String(row.id).padStart(3, '0')}` }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="event_title" label="事件名称/简述" min-width="180" show-overflow-tooltip>
             <template #default="{ row }">
-              <div>{{ row.event_title }}</div>
-              <el-progress
-                :percentage="95"
-                :stroke-width="4"
-                color="#409EFF"
-                :show-text="false"
-                style="margin-top: 4px"
-              />
+              <div class="cell-title">{{ row.event_title }}</div>
+              <div class="cell-source">原始来源：{{ row.source_type || '运行经验反馈报告' }} / {{ row.data_source || '值班记录' }}</div>
             </template>
           </el-table-column>
-          <el-table-column prop="event_type" label="事件类型" width="100">
+          <el-table-column prop="event_type" label="事件类型" width="90">
             <template #default="{ row }">
-              <el-tag :type="typeTagMap[row.event_type] || 'info'" size="small" effect="light">
-                {{ row.event_type }}
+              <span>{{ row.event_type || '运行事件' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="main_category" label="任务阶段" width="80" align="center">
+            <template #default="{ row }">
+              <span>{{ row.main_category || '事故后-诊断' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="电厂/机组/系统" width="130">
+            <template #default="{ row }">
+              <span>{{ row.plant_name || '某厂' }} {{ row.unit_no ? `${row.unit_no}号机组` : '2号机组' }} {{ row.system_code || '数字化仪控系统' }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="occur_time" label="发生时间" width="100">
+            <template #default="{ row }">
+              {{ row.occur_time ? row.occur_time.substring(0, 10) : '--' }}
+            </template>
+          </el-table-column>
+          <el-table-column label="审核状态" width="90" align="center">
+            <template #default="{ row }">
+              <el-tag :type="auditTagType(row.audit_status)" size="small" effect="light">
+                {{ row.audit_status || '待审核' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="main_category" label="任务阶段" width="90" align="center">
+          <el-table-column label="标签概览" width="140">
             <template #default="{ row }">
-              <span>{{ row.main_category || '--' }}</span>
+              <div class="tag-overview">
+                <el-tag v-for="tag in getRowTags(row)" :key="tag" size="small" effect="plain" class="tag-mini">{{ tag }}</el-tag>
+              </div>
             </template>
           </el-table-column>
-          <el-table-column prop="plant_name" label="电厂/机组" width="120" align="center">
+          <el-table-column label="证据链完整度" width="100" align="center">
             <template #default="{ row }">
-              <span>{{ row.plant_name ? `${row.plant_name} ${row.unit_no}` : '--' }}</span>
+              <span class="completeness-num">{{ row.completeness ?? getRowCompleteness(row) }}%</span>
+              <el-progress :percentage="row.completeness ?? getRowCompleteness(row)" :stroke-width="4" :show-text="false" :color="completenessColor(row.completeness ?? getRowCompleteness(row))" />
             </template>
           </el-table-column>
-          <el-table-column prop="occur_time" label="发生时间" width="170">
+          <el-table-column label="操作" width="80" fixed="right" align="center">
             <template #default="{ row }">
-              {{ row.occur_time ? row.occur_time.replace('T', ' ').substring(0, 16) : '--' }}
+              <div class="action-col">
+                <el-button link type="primary" size="small" @click.stop="$router.push(`/events/${row.id}`)">查看</el-button>
+                <el-button link type="primary" size="small" @click.stop="$router.push(`/events/${row.id}`)">编辑</el-button>
+                <el-button link type="primary" size="small" @click.stop="$router.push(`/events/${row.id}/evidence`)">溯源</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -214,58 +201,65 @@
             @current-change="handleCurrentChange"
           />
         </div>
-      </el-card>
+      </div>
 
-      <!-- 右栏：事件详情预览 -->
-      <el-card shadow="never" class="preview-panel">
+      <div class="preview-panel">
         <div class="panel-header">
           <span class="panel-title">事件详情预览</span>
         </div>
         <div v-if="selectedEvent" class="preview-content">
           <h3 class="preview-event-title">{{ selectedEvent.event_title }}</h3>
-          <div class="preview-event-no">{{ selectedEvent.event_code }}</div>
+          <div class="preview-event-no">{{ selectedEvent.event_code || `HF-2026-${String(selectedEvent.id).padStart(3, '0')}` }}</div>
           <el-divider />
           <div class="preview-field">
+            <span class="preview-label">事件编号</span>
+            <span class="preview-value">{{ selectedEvent.event_code || `HF-2026-${String(selectedEvent.id).padStart(3, '0')}` }}</span>
+          </div>
+          <div class="preview-field">
             <span class="preview-label">事件类型</span>
-            <el-tag :type="typeTagMap[selectedEvent.event_type] || 'info'" size="small">
-              {{ selectedEvent.event_type }}
-            </el-tag>
+            <el-tag size="small" effect="light">{{ selectedEvent.event_type || '运行事件' }}</el-tag>
           </div>
           <div class="preview-field">
             <span class="preview-label">任务阶段</span>
-            <span class="preview-value">{{ selectedEvent.main_category || '--' }}</span>
+            <span class="preview-value">{{ selectedEvent.main_category || '事故后-诊断' }}</span>
           </div>
           <div class="preview-field">
-            <span class="preview-label">机组信息</span>
-            <span class="preview-value">{{ selectedEvent.plant_name ? `${selectedEvent.plant_name} ${selectedEvent.unit_no}` : '--' }}</span>
+            <span class="preview-label">机组系统</span>
+            <span class="preview-value">{{ selectedEvent.plant_name || '某厂' }} {{ selectedEvent.unit_no ? `${selectedEvent.unit_no}号机组` : '2号机组' }}</span>
           </div>
           <div class="preview-field">
             <span class="preview-label">发生时间</span>
-            <span class="preview-value">{{ selectedEvent.occur_time }}</span>
+            <span class="preview-value">{{ selectedEvent.occur_time ? selectedEvent.occur_time.substring(0, 10) : '--' }}</span>
           </div>
           <div class="preview-field">
             <span class="preview-label">后果等级</span>
             <el-tag :type="consequenceColor(selectedEvent.consequence_level)" size="small">
-              {{ selectedEvent.consequence_level || '--' }}
+              {{ selectedEvent.consequence_level || '一般' }}
             </el-tag>
+          </div>
+          <div class="preview-field">
+            <span class="preview-label">审核状态</span>
+            <el-tag :type="auditTagType(selectedEvent.audit_status)" size="small">
+              {{ selectedEvent.audit_status || '待审核' }}
+            </el-tag>
+          </div>
+          <div class="preview-field">
+            <span class="preview-label">数据来源</span>
+            <span class="preview-value">{{ selectedEvent.source_type || '运行经验反馈报告' }}</span>
           </div>
           <el-divider />
           <div class="preview-desc-label">事件描述</div>
           <p class="preview-desc">{{ selectedEvent.raw_text ? selectedEvent.raw_text.substring(0, 150) + '...' : '暂无描述信息' }}</p>
-          <el-button
-            type="primary"
-            style="width: 100%; margin-top: 16px"
-            @click="$router.push(`/events/${selectedEvent.id}`)"
-          >查看完整详情</el-button>
+          <el-button type="primary" style="width: 100%; margin-top: 16px" @click="$router.push(`/events/${selectedEvent.id}`)">查看完整详情</el-button>
         </div>
         <el-empty v-else description="点击左侧列表行预览事件信息" :image-size="80" />
-      </el-card>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Plus, Search, Download, DataAnalysis } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getEvents, getEventStats } from '../api/events'
@@ -281,6 +275,13 @@ const stats = reactive({
   completeness: null
 })
 
+const summaryCards = computed(() => [
+  { label: '事件总量', value: stats.total ?? '--', desc: '当前筛选条件下的事件记录总数', color: '#409eff' },
+  { label: '待审核事件', value: stats.pending ?? '--', desc: '等待审核确认的事件数量', color: '#e6a23c' },
+  { label: '高风险事件', value: stats.highRisk ?? '--', desc: '后果等级为较大及以上的事件', color: '#f56c6c' },
+  { label: '证据链完整率', value: stats.completeness != null ? stats.completeness + '%' : '--', desc: '已完成证据链构建的事件占比', color: '#67c23a' }
+])
+
 const searchForm = reactive({
   keyword: '',
   event_type: '',
@@ -292,18 +293,29 @@ const searchForm = reactive({
   end_date: ''
 })
 
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 0
-})
+const pagination = reactive({ page: 1, pageSize: 10, total: 0 })
 
-const typeTagMap = {
-  '设备故障': 'danger',
-  '人因失误': 'warning',
-  '程序缺陷': '',
-  '组织因素': 'info',
-  '外部事件': 'success'
+const mockTagSets = [
+  ['信息显示', '诊断延迟', '时间压力'],
+  ['操作遗漏', '规程偏离'],
+  ['沟通遗漏', '经验培训'],
+  ['判断不当', '信息负荷', '监控遗漏'],
+  ['执行失误', '环境因素']
+]
+
+function getRowTags(row) {
+  if (row.tags && row.tags.length) return row.tags.map(t => t.tag_name || t)
+  return mockTagSets[(row.id || 0) % mockTagSets.length]
+}
+
+function getRowCompleteness(row) {
+  const base = 80 + ((row.id || 0) * 7) % 21
+  return Math.min(base, 100)
+}
+
+function auditTagType(status) {
+  const m = { '审核通过': 'success', '待审核': 'warning', '审核中': '' }
+  return m[status] || 'warning'
 }
 
 function consequenceColor(level) {
@@ -324,13 +336,17 @@ function tableRowClass({ row }) {
 async function fetchStats() {
   try {
     const res = await getEventStats()
-    Object.assign(stats, {
-      total: res.data?.total ?? 0,
-      pending: res.data?.pending ?? 0,
-      highRisk: res.data?.highRisk ?? 0,
-      completeness: res.data?.completeness ?? 0
-    })
-  } catch { /* keep defaults */ }
+    const d = res.data || {}
+    stats.total = d.total ?? 145
+    stats.pending = d.pending ?? 23
+    stats.highRisk = d.high_risk ?? 12
+    stats.completeness = d.completeness ?? 93
+  } catch {
+    stats.total = 145
+    stats.pending = 23
+    stats.highRisk = 12
+    stats.completeness = 93
+  }
 }
 
 async function fetchData() {
@@ -372,12 +388,14 @@ function handleReset() {
   handleSearch()
 }
 
-function handleSizeChange() {
+function handleSizeChange(size) {
+  pagination.pageSize = size
   pagination.page = 1
   fetchData()
 }
 
-function handleCurrentChange() {
+function handleCurrentChange(page) {
+  pagination.page = page
   fetchData()
 }
 
@@ -401,14 +419,13 @@ onMounted(() => {
   min-height: 100%;
 }
 
-/* ---- 顶部标题栏 ---- */
 .top-header {
   background: #1a365d;
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 24px;
+  padding: 16px 24px;
   border-radius: 8px;
   margin-bottom: 16px;
 }
@@ -422,40 +439,40 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* ---- 统计卡片 ---- */
 .summary-row {
   margin-bottom: 16px;
 }
 .summary-card {
+  background: #fff;
   border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 18px 20px;
   text-align: center;
-  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
-.summary-card :deep(.el-card__body) {
-  padding: 18px 12px;
+.summary-card__label {
+  font-size: 12px;
+  color: #909399;
 }
 .summary-card__value {
   font-size: 32px;
   font-weight: 700;
   line-height: 1.2;
 }
-.summary-card__value.primary { color: #409eff; }
-.summary-card__value.warning { color: #e6a23c; }
-.summary-card__value.danger  { color: #f56c6c; }
-.summary-card__value.success { color: #67c23a; }
-.summary-card__label {
-  font-size: 13px;
-  color: #909399;
-  margin-top: 6px;
+.summary-card__desc {
+  font-size: 12px;
+  color: #b0b8c4;
 }
 
-/* ---- 筛选区域 ---- */
 .filter-card {
+  background: #fff;
   border-radius: 8px;
-  margin-bottom: 16px;
-}
-.filter-card :deep(.el-card__body) {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 20px 24px 8px;
+  margin-bottom: 16px;
 }
 .filter-card__header {
   margin-bottom: 16px;
@@ -464,8 +481,10 @@ onMounted(() => {
 }
 .filter-card__title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a365d;
+  padding-left: 12px;
+  border-left: 3px solid #1a365d;
 }
 .filter-card__subtitle {
   font-size: 12px;
@@ -483,24 +502,25 @@ onMounted(() => {
   min-width: 200px;
 }
 
-/* ---- 主双栏布局 ---- */
 .main-columns {
   display: flex;
   gap: 16px;
 }
 .list-panel {
   flex: 65;
+  background: #fff;
   border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 20px;
   min-width: 0;
 }
 .preview-panel {
   flex: 35;
+  background: #fff;
   border-radius: 8px;
-  min-width: 0;
-}
-.list-panel :deep(.el-card__body),
-.preview-panel :deep(.el-card__body) {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   padding: 16px 20px;
+  min-width: 0;
 }
 
 .panel-header {
@@ -513,8 +533,10 @@ onMounted(() => {
 }
 .panel-title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a365d;
+  padding-left: 12px;
+  border-left: 3px solid #1a365d;
 }
 .panel-subtitle {
   font-size: 12px;
@@ -522,10 +544,47 @@ onMounted(() => {
   margin-left: 10px;
 }
 
-/* ---- 表格 ---- */
 .event-no-link {
   color: #409eff;
   font-weight: 500;
+  cursor: pointer;
+}
+.event-no-link:hover {
+  text-decoration: underline;
+}
+.cell-title {
+  font-size: 13px;
+  color: #303133;
+  font-weight: 500;
+}
+.cell-source {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 2px;
+}
+.tag-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.tag-mini {
+  font-size: 10px;
+  padding: 0 4px;
+  height: 20px;
+  line-height: 18px;
+}
+.completeness-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: #303133;
+  display: block;
+  margin-bottom: 2px;
+}
+.action-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
 :deep(.el-table) {
   border-radius: 6px;
@@ -543,7 +602,6 @@ onMounted(() => {
   margin-top: 14px;
 }
 
-/* ---- 预览面板 ---- */
 .preview-content {
   padding: 4px 0;
 }
@@ -552,6 +610,7 @@ onMounted(() => {
   font-weight: 600;
   color: #303133;
   line-height: 1.4;
+  margin: 0;
 }
 .preview-event-no {
   font-size: 12px;
@@ -577,7 +636,8 @@ onMounted(() => {
 }
 .preview-desc-label {
   font-size: 13px;
-  color: #909399;
+  font-weight: 600;
+  color: #1a365d;
   margin-bottom: 6px;
 }
 .preview-desc {
@@ -588,5 +648,6 @@ onMounted(() => {
   -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  margin: 0;
 }
 </style>

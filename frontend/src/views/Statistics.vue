@@ -1,6 +1,5 @@
 <template>
   <div class="statistics-page" v-loading="loading">
-    <!-- 顶部标签导航 -->
     <div class="tab-bar">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="统计分析" name="statistics" />
@@ -11,7 +10,6 @@
       </el-tabs>
     </div>
 
-    <!-- 标题栏 -->
     <div class="title-bar">
       <h2 class="page-title">统计分析与可视化展示模块</h2>
       <div class="title-actions">
@@ -22,7 +20,6 @@
       </div>
     </div>
 
-    <!-- 概览卡片 -->
     <div class="summary-row">
       <div v-for="card in summaryCards" :key="card.label" class="summary-card">
         <span class="card-sup">{{ card.label }}</span>
@@ -31,7 +28,6 @@
       </div>
     </div>
 
-    <!-- 统计筛选条件 -->
     <div class="filter-section">
       <div class="section-head">
         <h3 class="section-title">统计筛选条件</h3>
@@ -84,9 +80,7 @@
       </div>
     </div>
 
-    <!-- 图表区域：双栏布局 -->
     <el-row :gutter="20">
-      <!-- 左栏：分布统计 -->
       <el-col :span="12">
         <div class="chart-panel">
           <div class="panel-head">
@@ -96,9 +90,7 @@
 
           <div class="chart-block">
             <h4 class="chart-label">事件类型分析</h4>
-            <div class="donut-wrapper">
-              <div ref="donutRef" class="chart-box" style="height: 320px"></div>
-            </div>
+            <div ref="donutRef" class="chart-box" style="height: 320px"></div>
             <p class="chart-note">用于在统计基线下可视化失误归因框架关系</p>
           </div>
 
@@ -109,7 +101,6 @@
         </div>
       </el-col>
 
-      <!-- 右栏：影响因素统计 -->
       <el-col :span="12">
         <div class="chart-panel">
           <div class="panel-head">
@@ -137,10 +128,7 @@ const statsData = reactive({
   recent12: 0,
   topErrorType: '',
   topFactor: '',
-  unitCount: 0,
-  byType: [],
-  byErrorType: [],
-  byFactor: []
+  unitCount: 0
 })
 
 const filters = reactive({
@@ -381,13 +369,11 @@ onBeforeUnmount(() => {
   padding: 0 24px;
   border-radius: 8px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
-
 .tab-bar :deep(.el-tabs__header) {
   margin: 0;
 }
-
 .tab-bar :deep(.el-tabs__nav-wrap::after) {
   height: 1px;
 }
@@ -399,44 +385,38 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
   padding: 0 4px;
 }
-
 .page-title {
   font-size: 22px;
   font-weight: 700;
   color: #1a365d;
   margin: 0;
 }
-
 .title-actions {
   display: flex;
   gap: 8px;
 }
 
-/* 概览卡片 */
 .summary-row {
   display: flex;
   gap: 16px;
   margin-bottom: 20px;
 }
-
 .summary-card {
   flex: 1;
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
-
 .card-sup {
   font-size: 12px;
   color: #909399;
   margin-bottom: 8px;
 }
-
 .card-value {
   font-size: 32px;
   font-weight: 700;
@@ -444,83 +424,72 @@ onBeforeUnmount(() => {
   line-height: 1.2;
   margin-bottom: 6px;
 }
-
 .card-desc {
   font-size: 12px;
   color: #b0b8c4;
 }
 
-/* 筛选区 */
 .filter-section {
   background: #fff;
   border-radius: 8px;
   padding: 20px 24px;
   margin-bottom: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
-
 .section-head {
   margin-bottom: 16px;
 }
-
 .section-title {
   font-size: 16px;
   font-weight: 700;
   color: #1a365d;
   margin: 0 0 4px;
+  padding-left: 12px;
+  border-left: 3px solid #1a365d;
 }
-
 .section-sub {
   font-size: 13px;
   color: #909399;
   margin: 0;
+  padding-left: 12px;
 }
-
 .filter-row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
-
 .filter-actions {
   margin-left: auto;
   display: flex;
   gap: 8px;
 }
 
-/* 图表面板 */
 .chart-panel {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   margin-bottom: 20px;
 }
-
 .panel-head {
   margin-bottom: 20px;
 }
-
 .chart-block {
   margin-bottom: 28px;
 }
-
 .chart-block:last-child {
   margin-bottom: 0;
 }
-
 .chart-label {
   font-size: 15px;
   font-weight: 600;
   color: #2d3748;
   margin: 0 0 8px;
 }
-
 .chart-box {
   width: 100%;
 }
-
 .chart-note {
   font-size: 12px;
   color: #a0aec0;

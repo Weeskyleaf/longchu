@@ -5,9 +5,7 @@
       <el-button @click="$router.back()">返回</el-button>
     </div>
 
-    <!-- Section A: 三列文本展示 -->
     <el-row :gutter="20">
-      <!-- LEFT: 事件描述 & PSF 因子取值 -->
       <el-col :span="8">
         <div class="analysis-card">
           <div class="card-header-dark">事件描述 &amp; PSF 因子取值</div>
@@ -17,16 +15,16 @@
             <div class="section-subtitle">表：LOCA事件PSF因子取值及定量化结果</div>
             <el-table :data="ad.psfRows" border size="small" class="psf-value-table">
               <el-table-column prop="name" label="绩效形成因子(PSF)" min-width="120" />
-              <el-table-column label="诊断乘子值" min-width="120" align="center">
+              <el-table-column label="诊断乘子值" min-width="140" align="center">
                 <template #default="{ row }">
                   <span>{{ row.dv }}</span>
-                  <span v-if="row.dn" class="note-text">({{ row.dn }})</span>
+                  <span v-if="row.dn" class="note-text"> ({{ row.dn }})</span>
                 </template>
               </el-table-column>
-              <el-table-column label="动作乘子值" min-width="120" align="center">
+              <el-table-column label="动作乘子值" min-width="140" align="center">
                 <template #default="{ row }">
                   <span>{{ row.av }}</span>
-                  <span v-if="row.an" class="note-text">({{ row.an }})</span>
+                  <span v-if="row.an" class="note-text"> ({{ row.an }})</span>
                 </template>
               </el-table-column>
             </el-table>
@@ -41,7 +39,6 @@
         </div>
       </el-col>
 
-      <!-- CENTER: 量化结果 & 不确定性 -->
       <el-col :span="8">
         <div class="analysis-card">
           <div class="card-header-dark">量化结果 &amp; 不确定性 (Beta分布)</div>
@@ -64,24 +61,24 @@
             <div class="calc-logic">
               <div class="logic-title">计算逻辑 (SPAR-H 基本模型)</div>
               <div class="formula-block">
-                <p>基本公式: HEP<sub>final</sub> = P₀ × Πλ<sub>i</sub> (分类累乘)</p>
+                <p>基本公式: HEP<sub>final</sub> = P₀ × ∏PSF<sub>i</sub></p>
                 <p class="formula-line">
-                  诊断 HEP = {{ fmtSci(ad.diagNominal) }} × {{ fmtSci(ad.diagComposite) }}
-                  = {{ fmtSci(ad.diagHep) }}
+                  诊断: HEP<sub>d</sub> = P₀,d × (分类累乘) = {{ fmtSci(ad.diagNominal) }} × {{ ad.diagMultStr }} = {{ fmtSci(ad.diagHep) }}
                 </p>
                 <p class="formula-line">
-                  动作 HEP = {{ fmtSci(ad.actNominal) }} × {{ fmtSci(ad.actComposite) }}
-                  = {{ fmtSci(ad.actHep) }}
+                  动作: HEP<sub>a</sub> = P₀,a × (分类累乘) = {{ fmtSci(ad.actNominal) }} × {{ ad.actMultStr }} = {{ fmtSci(ad.actHep) }}
                 </p>
                 <p class="formula-line formula-highlight">
-                  联合HEP = 诊断HEP + 动作HEP = {{ fmtSci(ad.diagHep) }} + {{ fmtSci(ad.actHep) }}
-                  = {{ fmtSci(ad.jointHep) }}
+                  联合HEP = 诊断HEP + 动作HEP = {{ fmtSci(ad.diagHep) }} + {{ fmtSci(ad.actHep) }} = {{ fmtSci(ad.jointHep) }}
                 </p>
               </div>
               <div class="formula-note">
                 负向PSF数量 = {{ ad.negCount }} ({{ ad.negNote }})，{{
-                  ad.negCount >= 3 ? '需要启用修正公式' : '未达到3，无需启用修正'
+                  ad.negCount >= 3 ? '需要启用修正公式' : '未达到≥3, 无需启用修正公式'
                 }}
+              </div>
+              <div class="formula-note" style="margin-top: 6px">
+                Beta不确定性: α = {{ ad.alpha }}, β = {{ ad.betaVal }}
               </div>
             </div>
 
@@ -92,7 +89,6 @@
         </div>
       </el-col>
 
-      <!-- RIGHT: 证据链 & 报表导出 -->
       <el-col :span="8">
         <div class="analysis-card">
           <div class="card-header-dark">证据链 &amp; 报表导出</div>
@@ -134,9 +130,7 @@
       </el-col>
     </el-row>
 
-    <!-- Section B: 图表展示 -->
     <el-row :gutter="20" style="margin-top: 20px">
-      <!-- 左: PSF影响对比柱状图 (水平分组) -->
       <el-col :span="12">
         <div class="analysis-card">
           <div class="card-header-dark">绩效形成因子(PSF)影响对比 | 诊断 vs 动作 乘子值</div>
@@ -147,7 +141,6 @@
         </div>
       </el-col>
 
-      <!-- 右: Beta分布概率密度曲线 -->
       <el-col :span="12">
         <div class="analysis-card">
           <div class="card-header-dark">Beta 分布概率密度曲线（CNI 先验）</div>
@@ -158,12 +151,12 @@
             </div>
 
             <div class="info-cards-row">
-              <div class="info-card"><div class="ic-label">α</div><div class="ic-value">{{ ad.alpha }}</div></div>
-              <div class="info-card"><div class="ic-label">β</div><div class="ic-value">{{ ad.betaVal }}</div></div>
-              <div class="info-card"><div class="ic-label">均值μ</div><div class="ic-value">{{ fmtSci(ad.mean) }}</div></div>
-              <div class="info-card"><div class="ic-label">5%分位</div><div class="ic-value">{{ fmtSci(ad.p05) }}</div></div>
-              <div class="info-card"><div class="ic-label">95%分位</div><div class="ic-value">{{ fmtSci(ad.p95) }}</div></div>
-              <div class="info-card wide"><div class="ic-label">区间</div><div class="ic-value">[{{ fmtSci(ad.p05) }}, {{ fmtSci(ad.p95) }}]</div></div>
+              <div class="info-card-mini"><div class="ic-label">α</div><div class="ic-value">{{ ad.alpha }}</div></div>
+              <div class="info-card-mini"><div class="ic-label">β</div><div class="ic-value">{{ ad.betaVal }}</div></div>
+              <div class="info-card-mini"><div class="ic-label">均值μ</div><div class="ic-value">{{ fmtSci(ad.mean) }}</div></div>
+              <div class="info-card-mini"><div class="ic-label">5%分位</div><div class="ic-value">{{ fmtSci(ad.p05) }}</div></div>
+              <div class="info-card-mini"><div class="ic-label">95%分位</div><div class="ic-value">{{ fmtSci(ad.p95) }}</div></div>
+              <div class="info-card-mini wide"><div class="ic-label">区间</div><div class="ic-value">[{{ fmtSci(ad.p05) }}, {{ fmtSci(ad.p95) }}]</div></div>
             </div>
 
             <div style="text-align: right; margin-bottom: 8px">
@@ -193,7 +186,7 @@ const psfBarRef = ref(null)
 const betaPdfRef = ref(null)
 const charts = []
 
-const PSF_NAMES = ['可用时间', '压力', '复杂度', '经验/培训', '规程', '工效学/人机界面', '职责适宜度', '工序']
+const PSF_NAMES = ['可用时间', '压力', '复杂程度', '经验/培训', '规程', '工效学/人机界面', '职责适宜度', '工序']
 
 const LOCA_DEFAULT = {
   eventDescription:
@@ -203,7 +196,7 @@ const LOCA_DEFAULT = {
     '与动作阶段两个任务类型，综合评估操纵员在高压力工况下的人因失误概率。',
   psfRows: [
     { name: '基础值(名义HEP)', dv: '1.0E-2', av: '1.0E-3' },
-    { name: '可用时间', dv: '0.01', dn: '充足时间>60min', av: '0.01', an: '2/5倍所需时间' },
+    { name: '可用时间', dv: '0.01', dn: '充足时间 >60min', av: '0.01', an: '2/5倍所需时间' },
     { name: '压力', dv: '5', dn: '很高', av: '2', an: '高' },
     { name: '复杂程度', dv: '1', dn: '正常', av: '1', an: '正常' },
     { name: '经验/培训', dv: '0.5', dn: '高', av: '0.5', an: '高' },
@@ -220,14 +213,16 @@ const LOCA_DEFAULT = {
   actHep: 1e-5,
   jointHep: 1.35e-4,
   negCount: 1,
-  negNote: '仅压力为负',
+  negNote: '仅压力为负向',
   alpha: 0.015,
   betaVal: 111.1,
   mean: 1.35e-4,
-  p05: 9.45e-90,
+  p05: 9.45e-6,
   p95: 1.71e-4,
   diagMult: [0.01, 5, 1, 0.5, 0.5, 1, 1, 1],
-  actMult: [0.01, 2, 1, 0.5, 1, 1, 1, 1]
+  actMult: [0.01, 2, 1, 0.5, 1, 1, 1, 1],
+  diagMultStr: '0.01 × 5 × 1 × 0.5 × 0.5 × 1 × 1 × 1',
+  actMultStr: '0.01 × 2 × 1 × 0.5 × 1 × 1 × 1 × 1'
 }
 
 const ad = reactive({ ...LOCA_DEFAULT })
@@ -239,7 +234,6 @@ function fmtSci(v) {
   return v < 0.001 || v > 10000 ? v.toExponential(2) : v.toPrecision(4)
 }
 
-/* ── Beta PDF 数学工具 ── */
 function lnGamma(z) {
   const c = [
     0.99999999999980993, 676.5203681218851, -1259.1392167224028,
@@ -260,7 +254,6 @@ function betaPDF(x, a, b) {
   return Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - logB)
 }
 
-/* ── 图表渲染 ── */
 function renderPsfBarChart() {
   if (!psfBarRef.value) return
   const chart = echarts.init(psfBarRef.value)
@@ -307,7 +300,9 @@ function renderBetaChart() {
   if (!a || !b) return
 
   const pts = []
-  for (let exp = -10; exp <= 0; exp += 0.03) {
+  const startExp = -12
+  const endExp = -1
+  for (let exp = startExp; exp <= endExp; exp += 0.02) {
     const x = Math.pow(10, exp)
     const y = betaPDF(x, a, b)
     if (y > 0 && isFinite(y)) pts.push([x, y])
@@ -330,7 +325,8 @@ function renderBetaChart() {
       name: 'x (失误概率)',
       nameLocation: 'center',
       nameGap: 28,
-      min: useLogScale.value ? 1e-10 : undefined
+      min: useLogScale.value ? 1e-12 : undefined,
+      max: useLogScale.value ? 0.1 : undefined
     },
     yAxis: {
       type: axisType,
@@ -350,7 +346,6 @@ function renderBetaChart() {
   charts.push(chart)
 }
 
-/* ── 数据加载 ── */
 function loadFromCalcResult(stored) {
   const { eventInfo, calcResult } = stored
   ad.eventDescription = eventInfo?.context || ad.eventDescription
@@ -365,12 +360,14 @@ function loadFromCalcResult(stored) {
     ad.diagHep = diag.final_hep ?? 0
     ad.negCount = diag.negative_count ?? 0
     ad.diagMult = (diag.psf_details || []).map(p => p.multiplier)
+    ad.diagMultStr = ad.diagMult.join(' × ')
   }
   if (act) {
     ad.actNominal = act.nominal_hep ?? 1e-3
     ad.actComposite = act.composite_psf ?? 1
     ad.actHep = act.final_hep ?? 0
     ad.actMult = (act.psf_details || []).map(p => p.multiplier)
+    ad.actMultStr = ad.actMult.join(' × ')
   }
 
   ad.jointHep = calcResult.joint_hep ?? (ad.diagHep + ad.actHep)
@@ -381,7 +378,7 @@ function loadFromCalcResult(stored) {
   ad.negCount = negDiag.length
   ad.negNote = allNeg.length === 0
     ? '无负向PSF'
-    : allNeg.map(p => p.psf_name).join('、') + '为负'
+    : allNeg.map(p => p.psf_name).join('、') + '为负向'
 
   const u = calcResult.uncertainty
   if (u) {
@@ -422,12 +419,14 @@ function loadFromApi(apiData) {
     ad.diagHep = diag.final_hep ?? 0
     ad.negCount = diag.negative_count ?? 0
     ad.diagMult = (diag.psf_values || diag.psf_details || []).map(p => p.multiplier)
+    ad.diagMultStr = ad.diagMult.join(' × ')
   }
   if (act) {
     ad.actNominal = act.nominal_hep ?? 1e-3
     ad.actComposite = act.composite_psf ?? 1
     ad.actHep = act.final_hep ?? 0
     ad.actMult = (act.psf_values || act.psf_details || []).map(p => p.multiplier)
+    ad.actMultStr = ad.actMult.join(' × ')
   }
 
   ad.jointHep = apiData.joint_hep ?? (ad.diagHep + ad.actHep)
@@ -437,9 +436,10 @@ function loadFromApi(apiData) {
     ...(act?.psf_values || act?.psf_details || [])
   ]
   const negItems = allDetails.filter(p => p.multiplier > 1)
+  ad.negCount = negItems.length
   ad.negNote = negItems.length === 0
     ? '无负向PSF'
-    : negItems.map(p => p.psf_name).filter((v, i, a) => a.indexOf(v) === i).join('、') + '为负'
+    : negItems.map(p => p.psf_name).filter((v, i, a) => a.indexOf(v) === i).join('、') + '为负向'
 
   const u = apiData.uncertainty
   if (u) {
@@ -516,9 +516,9 @@ onBeforeUnmount(() => {
 .page-header h2 {
   margin: 0;
   color: #1a365d;
+  font-weight: 700;
 }
 
-/* ── 卡片 ── */
 .analysis-card {
   border-radius: 8px;
   overflow: hidden;
@@ -537,7 +537,6 @@ onBeforeUnmount(() => {
   padding: 16px;
 }
 
-/* ── 左列 ── */
 .event-desc {
   padding: 10px 12px;
   background: #f0f5ff;
@@ -559,7 +558,6 @@ onBeforeUnmount(() => {
 .note-text {
   color: #909399;
   font-size: 11px;
-  margin-left: 2px;
 }
 .footer-note {
   font-size: 11px;
@@ -568,7 +566,6 @@ onBeforeUnmount(() => {
   margin-top: 6px;
 }
 
-/* ── 中列 ── */
 .hep-display {
   text-align: center;
   padding: 16px 0 12px;
@@ -621,6 +618,9 @@ onBeforeUnmount(() => {
   line-height: 1.8;
   color: #4a5568;
 }
+.formula-block p {
+  margin: 0;
+}
 .formula-line {
   padding-left: 12px;
 }
@@ -644,7 +644,6 @@ onBeforeUnmount(() => {
   padding-top: 10px;
 }
 
-/* ── 右列 ── */
 .evidence-text {
   font-size: 13px;
   color: #606266;
@@ -683,7 +682,6 @@ onBeforeUnmount(() => {
   font-family: 'Courier New', Courier, monospace;
 }
 
-/* ── 图表区 ── */
 .chart-box {
   width: 100%;
   height: 400px;
@@ -706,7 +704,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
-.info-card {
+.info-card-mini {
   flex: 1;
   min-width: 70px;
   background: #f0f5ff;
@@ -714,7 +712,7 @@ onBeforeUnmount(() => {
   padding: 6px 8px;
   text-align: center;
 }
-.info-card.wide {
+.info-card-mini.wide {
   min-width: 140px;
 }
 .ic-label {
