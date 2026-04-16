@@ -38,9 +38,11 @@ Nuclear Power Human Factors Database System
 
 ---
 
-## 环境准备（macOS）
+## 环境准备
 
-### 1. 安装 JDK 17
+### macOS
+
+#### 1. 安装 JDK 17
 
 ```bash
 brew install openjdk@17
@@ -55,48 +57,117 @@ java -version
 # 应显示: openjdk version "17.x.x"
 ```
 
-### 2. 安装 Maven
+#### 2. 安装 Maven
 
 ```bash
 brew install maven
 
 # 验证
 mvn -version
-# 应显示: Apache Maven 3.9.x
 ```
 
-### 3. 安装 Python 3 及依赖
+#### 3. 安装 Python 3
 
 ```bash
 # macOS 通常自带 python3，如果没有：
 brew install python3
 
 # 验证
-python3 --version
-# 应显示: Python 3.9+
+python3 --version   # 应显示 Python 3.9+
 ```
 
-### 4. 安装 Node.js（前端需要）
+#### 4. 安装 Node.js
 
 ```bash
 brew install node
 
 # 验证
 node -v   # 应显示 v16+
-npm -v    # 应显示 9+
+npm -v
 ```
 
-### 5.（可选）安装 MySQL 8
+#### 5.（可选）安装 MySQL 8
 
 ```bash
 brew install mysql
 brew services start mysql
-
-# 创建数据库
 mysql -u root -e "CREATE DATABASE nuclear_hf DEFAULT CHARACTER SET utf8mb4;"
 ```
 
-> 如果不安装 MySQL，系统默认使用 H2 内存数据库，无需额外配置即可运行。
+> 不安装 MySQL 也能运行，系统默认使用 H2 内存数据库。
+
+---
+
+### Windows
+
+#### 1. 安装 JDK 17
+
+从 [Adoptium](https://adoptium.net/) 下载 OpenJDK 17 安装包（.msi），安装时勾选"设置 JAVA_HOME 环境变量"。
+
+或使用 winget：
+
+```powershell
+winget install EclipseAdoptium.Temurin.17.JDK
+```
+
+安装后打开**新的命令提示符**验证：
+
+```cmd
+java -version
+```
+
+如果提示找不到命令，手动设置环境变量：
+1. 右键"此电脑" → 属性 → 高级系统设置 → 环境变量
+2. 新建系统变量 `JAVA_HOME`，值为 JDK 安装路径（如 `C:\Program Files\Eclipse Adoptium\jdk-17.0.x-hotspot`）
+3. 编辑 `Path` 变量，添加 `%JAVA_HOME%\bin`
+
+#### 2. 安装 Maven
+
+从 [Maven 官网](https://maven.apache.org/download.cgi) 下载 Binary zip，解压到如 `C:\maven`。
+
+添加环境变量：
+1. 新建系统变量 `MAVEN_HOME`，值为 `C:\maven\apache-maven-3.9.x`
+2. 编辑 `Path`，添加 `%MAVEN_HOME%\bin`
+
+验证：
+
+```cmd
+mvn -version
+```
+
+#### 3. 安装 Python 3
+
+从 [Python 官网](https://www.python.org/downloads/) 下载安装包，**安装时务必勾选 "Add Python to PATH"**。
+
+验证：
+
+```cmd
+python --version
+pip --version
+```
+
+> Windows 下使用 `python` 和 `pip` 命令（不带 `3` 后缀）。
+
+#### 4. 安装 Node.js
+
+从 [Node.js 官网](https://nodejs.org/) 下载 LTS 版本安装包（.msi），默认安装即可。
+
+验证：
+
+```cmd
+node -v
+npm -v
+```
+
+#### 5.（可选）安装 MySQL 8
+
+从 [MySQL 官网](https://dev.mysql.com/downloads/mysql/) 下载 MySQL Installer，安装时设置 root 密码。
+
+安装完成后打开 MySQL Command Line Client：
+
+```sql
+CREATE DATABASE nuclear_hf DEFAULT CHARACTER SET utf8mb4;
+```
 
 ---
 
@@ -112,22 +183,23 @@ git checkout v2-springboot
 
 ### 第二步：安装依赖
 
+**macOS / Linux：**
+
 ```bash
-# 1. 后端 Maven 依赖（首次会下载较多包，耐心等待）
-cd backend
-mvn dependency:resolve
-cd ..
-
-# 2. SPAR-H 计算服务 Python 依赖
-cd spar-h-service
-pip3 install -r requirements.txt
-cd ..
-
-# 3. 前端 npm 依赖
-cd frontend
-npm install
-cd ..
+cd backend && mvn dependency:resolve && cd ..
+cd spar-h-service && pip3 install -r requirements.txt && cd ..
+cd frontend && npm install && cd ..
 ```
+
+**Windows（CMD 或 PowerShell）：**
+
+```cmd
+cd backend && mvn dependency:resolve && cd ..
+cd spar-h-service && pip install -r requirements.txt && cd ..
+cd frontend && npm install && cd ..
+```
+
+> Windows 下用 `pip` 而非 `pip3`，用 `python` 而非 `python3`。
 
 ### 第三步：启动服务（需要 3 个终端窗口）
 
@@ -135,13 +207,11 @@ cd ..
 
 ```bash
 cd spar-h-service
-python3 app.py
+python3 app.py          # macOS/Linux
+python app.py           # Windows
 ```
 
-看到以下输出表示成功：
-```
- * Running on http://127.0.0.1:5001
-```
+看到 `Running on http://127.0.0.1:5001` 表示成功。
 
 **终端 2 — 启动 Spring Boot 后端（端口 3000）**
 
@@ -150,13 +220,7 @@ cd backend
 mvn spring-boot:run
 ```
 
-看到以下输出表示成功：
-```
-Tomcat started on port 3000 (http) with context path '/api'
-Started NuclearHfApplication in x.xx seconds
-```
-
-> 首次启动会自动建表并导入种子数据（10 条核电站事件 + PSF 字典 + 标签字典）
+看到 `Started NuclearHfApplication` 表示成功。首次启动会自动建表并导入种子数据。
 
 **终端 3 — 启动前端开发服务器（端口 8080）**
 
@@ -165,11 +229,7 @@ cd frontend
 npm run dev
 ```
 
-看到以下输出表示成功：
-```
-VITE ready in xxx ms
-➜  Local:   http://127.0.0.1:8080/
-```
+看到 `Local: http://127.0.0.1:8080/` 表示成功。
 
 ### 第四步：访问系统
 
@@ -303,16 +363,29 @@ longchu/
 
 ### Q: 启动后端报 "JAVA_HOME is not set"
 
+**macOS/Linux：**
+
 ```bash
 export JAVA_HOME=/usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 export PATH="$JAVA_HOME/bin:$PATH"
 ```
 
-建议将以上两行加入 `~/.zshrc` 持久化。
+建议加入 `~/.zshrc` 或 `~/.bashrc` 持久化。
+
+**Windows：**
+
+1. 右键"此电脑" → 属性 → 高级系统设置 → 环境变量
+2. 新建系统变量 `JAVA_HOME`，值为 JDK 安装路径
+3. 编辑 `Path`，添加 `%JAVA_HOME%\bin`
+4. **重新打开命令提示符**使设置生效
 
 ### Q: Maven 下载依赖很慢
 
-在 `~/.m2/settings.xml` 中配置阿里云镜像：
+在 Maven 配置文件中设置阿里云镜像：
+- macOS/Linux: `~/.m2/settings.xml`
+- Windows: `C:\Users\你的用户名\.m2\settings.xml`
+
+如果文件不存在就新建：
 
 ```xml
 <settings>
@@ -328,16 +401,48 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ### Q: 端口被占用
 
+**macOS/Linux：**
+
 ```bash
-# 查看并杀掉占用端口的进程
-lsof -ti:3000 | xargs kill -9   # 后端
-lsof -ti:5001 | xargs kill -9   # Flask
-lsof -ti:8080 | xargs kill -9   # 前端
+lsof -ti:3000 | xargs kill -9
+lsof -ti:5001 | xargs kill -9
+lsof -ti:8080 | xargs kill -9
 ```
+
+**Windows（管理员权限 CMD）：**
+
+```cmd
+netstat -ano | findstr :3000
+taskkill /PID <PID号> /F
+
+netstat -ano | findstr :5001
+taskkill /PID <PID号> /F
+
+netstat -ano | findstr :8080
+taskkill /PID <PID号> /F
+```
+
+### Q: Windows 上 python3 命令不存在
+
+Windows 安装 Python 后命令是 `python` 而非 `python3`，`pip` 而非 `pip3`。启动 Flask 服务用：
+
+```cmd
+python app.py
+```
+
+### Q: Windows 上 npm install 报 node-gyp 错误
+
+安装 Windows 构建工具：
+
+```cmd
+npm install --global windows-build-tools
+```
+
+或安装 Visual Studio Build Tools（勾选"C++ 生成工具"工作负载）。
 
 ### Q: 前端页面空白 / API 404
 
-确保三个服务都已启动，且启动顺序为：Flask → Spring Boot → 前端。
+确保三个服务都已启动，启动顺序：Flask → Spring Boot → 前端。
 
 ### Q: 如何切换回 V1 版本
 
