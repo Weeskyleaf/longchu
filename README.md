@@ -1,27 +1,230 @@
-# 核电人因数据库系统
+# 核电人因数据库系统 (V1 - Node.js)
 
 Nuclear Power Human Factors Database System
 
 基于论文《核电人因数据库系统设计与实现》构建的 Web 化平台，融合**人因事件分析**与**人因可靠性分析（SPAR-H）**两大子系统。
 
+> V2 版本（Spring Boot/Maven）请切换到 `v2-springboot` 分支：`git checkout v2-springboot`
+
+---
+
 ## 系统架构
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   展现层 (Vue 3 + Element Plus)           │
-│     事件台账 │ 统计分析 │ 分析案例 │ SPAR-H计算器          │
+│              展现层 (Vue 3 + Element Plus + ECharts)       │
+│    事件台账 │ 事件详情 │ 统计分析 │ 分析案例 │ SPAR-H计算器  │
+│    Port: 8080                                            │
 ├──────────────────────┬──────────────────────────────────┤
-│  业务调度层 (Express) │  核心计算层 (Flask)               │
-│  Port: 3000          │  Port: 5001                       │
-│  事件/任务/标签/证据链 │  SPAR-H HEP计算                  │
-│  分析案例管理          │  五级相关性修正                    │
-│  用户权限              │  Beta分布不确定性分析              │
+│  业务调度层 (Express)  │  核心计算层 (Flask)               │
+│  Port: 3000           │  Port: 5001                      │
+│  事件/任务/标签/证据链  │  SPAR-H HEP计算                  │
+│  分析案例管理           │  五级相关性修正                    │
+│  用户权限               │  Beta分布不确定性分析              │
 ├──────────────────────┴──────────────────────────────────┤
-│              数据持久化层 (SQLite / MySQL)                 │
-│  事件主表 │ 任务单元 │ 标签字典 │ 影响因素 │ 分析案例       │
-│  PSF字典 │ 相关性评估 │ 不确定性结果 │ 证据链              │
+│              数据持久化层 (SQLite)                         │
+│  17 张数据表 — 对应论文表 3.1-3.9 & 4.1-4.5               │
 └─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 技术栈
+
+| 层次 | 技术 | 说明 |
+|------|------|------|
+| 前端 | Vue 3 + Element Plus + ECharts | 交互界面与可视化 |
+| 后端 | Express.js (Node.js) | RESTful API 与业务调度 |
+| 计算层 | Flask (Python) + SciPy | SPAR-H 量化算法 |
+| 数据库 | SQLite (better-sqlite3) | 结构化数据持久化，零配置 |
+
+---
+
+## 环境准备（macOS）
+
+### 1. 安装 Node.js
+
+```bash
+brew install node
+
+# 验证
+node -v   # 应显示 v16+
+npm -v    # 应显示 9+
+```
+
+### 2. 安装 Python 3
+
+```bash
+# macOS 通常自带，如果没有：
+brew install python3
+
+# 验证
+python3 --version   # 应显示 Python 3.9+
+pip3 --version
+```
+
+> 不需要安装 Java、Maven 或 MySQL。V1 使用 SQLite 数据库，零配置。
+
+---
+
+## 快速开始
+
+### 第一步：克隆项目
+
+```bash
+git clone https://github.com/Weeskyleaf/longchu.git
+cd longchu
+```
+
+> main 分支就是 V1 版本，无需切换。
+
+### 第二步：安装依赖
+
+```bash
+# 1. 后端依赖
+cd backend
+npm install
+cd ..
+
+# 2. SPAR-H 计算服务依赖
+cd spar-h-service
+pip3 install -r requirements.txt
+cd ..
+
+# 3. 前端依赖
+cd frontend
+npm install
+cd ..
+```
+
+> 如果 `npm install` 在 backend 报 `node-gyp` 错误，先运行 `pip3 install setuptools` 再重试。
+
+### 第三步：启动服务（需要 3 个终端窗口）
+
+**终端 1 — 启动 SPAR-H 计算服务（端口 5001）**
+
+```bash
+cd spar-h-service
+python3 app.py
+```
+
+看到以下输出表示成功：
+```
+ * Running on http://127.0.0.1:5001
+```
+
+**终端 2 — 启动后端 API 服务（端口 3000）**
+
+```bash
+cd backend
+npm start
+```
+
+看到以下输出表示成功：
+```
+核电人因数据库后端服务已启动 → http://localhost:3000
+数据库已就绪，共 10 条事件记录
+```
+
+> 首次启动会自动创建 SQLite 数据库文件 `backend/data/nuclear_hf.db`，并导入种子数据。
+
+**终端 3 — 启动前端开发服务器（端口 8080）**
+
+```bash
+cd frontend
+npm run dev
+```
+
+看到以下输出表示成功：
+```
+VITE ready in xxx ms
+➜  Local:   http://127.0.0.1:8080/
+```
+
+### 第四步：访问系统
+
+浏览器打开 **http://localhost:8080**
+
+默认账户：`admin / admin123`
+
+---
+
+## 项目结构
+
+```
+longchu/
+├── sql/                    # MySQL 兼容建表脚本（可选）
+│   └── init.sql
+├── backend/                # Express.js 后端
+│   ├── package.json
+│   ├── data/               # SQLite 数据库文件（自动生成）
+│   │   └── nuclear_hf.db
+│   └── src/
+│       ├── app.js          # 主入口（端口 3000）
+│       ├── config/
+│       │   └── database.js # SQLite 建表 + 种子数据
+│       ├── middleware/
+│       │   └── auth.js     # JWT 认证中间件
+│       └── routes/
+│           ├── events.js   # 事件管理（CRUD + 统计）
+│           ├── tasks.js    # 任务单元
+│           ├── tags.js     # 标签字典 + 事件绑定
+│           ├── factors.js  # 影响因素评估
+│           ├── persons.js  # 人员管理
+│           ├── evidence.js # 证据链
+│           ├── analysis.js # HRA 分析案例
+│           └── users.js    # 用户认证
+├── spar-h-service/         # Flask SPAR-H 计算微服务
+│   ├── app.py              # Flask 入口（端口 5001）
+│   ├── spar_h_engine.py    # 核心计算引擎
+│   ├── routes.py           # 计算 API 路由
+│   └── requirements.txt    # Python 依赖
+└── frontend/               # Vue 3 前端
+    ├── package.json
+    ├── vite.config.js      # Vite 配置（代理 /api → 3000）
+    └── src/
+        ├── App.vue         # 深蓝侧边栏 + 白色主区域布局
+        ├── router/         # 路由配置
+        ├── api/            # Axios API 封装
+        └── views/
+            ├── events/     # 事件台账、详情、创建
+            ├── statistics/ # 统计分析（ECharts 可视化）
+            └── analysis/   # 分析案例、SPAR-H 计算器
+```
+
+---
+
+## 数据库设计（17 张表）
+
+**人因事件分析子系统（论文表 3.1-3.9）：**
+
+| 表名 | 说明 | 论文表号 |
+|------|------|----------|
+| event_main | 事件主表 | 表3.1 |
+| task_unit | 任务单元表 | 表3.2 |
+| scenario_info | 场景信息表 | 表3.3 |
+| tag_dict | 标签字典表 | 表3.4 |
+| event_tag | 事件标签关联表 | 表3.5 |
+| impact_factor | 影响因素评估表 | 表3.6 |
+| person_info | 涉事人员表 | 表3.7 |
+| event_person | 事件人员关联表 | 表3.8 |
+| evidence_chain | 证据链表 | 表3.9 |
+
+**人因可靠性分析子系统（论文表 4.1-4.5）：**
+
+| 表名 | 说明 | 论文表号 |
+|------|------|----------|
+| analysis_case | 分析案例主表 | 表4.1 |
+| sparh_psf_dict | SPAR-H 绩效因子表 | 表4.2 |
+| evidence_index | 证据索引表 | 表4.3 |
+| dependency_assessment | 相关性评估表 | 表4.4 |
+| uncertainty_result | 不确定性处理表 | 表4.5 |
+| case_task | 案例任务表 | — |
+| case_psf_value | 案例PSF赋值记录 | — |
+
+**系统管理：** sys_user
+
+---
 
 ## 功能特性
 
@@ -37,124 +240,65 @@ Nuclear Power Human Factors Database System
 - SPAR-H 方法完整实现
 - 8 个绩效形成因子（PSF）赋值
 - 诊断/动作任务 HEP 自动计算
-- 负向 PSF ≥ 3 时的调整公式
+- 负向 PSF >= 3 时的调整公式
 - 五级相关性模型修正
 - Beta 分布不确定性分析（CNI 先验）
-- PSF 影响因素柱状图
-- Beta 概率密度函数曲线可视化
+- PSF 影响因素柱状图 + Beta 概率密度函数曲线
 
-## 技术栈
-
-| 层次 | 技术 | 说明 |
-|------|------|------|
-| 前端 | Vue 3 + Element Plus + ECharts | 交互界面与可视化 |
-| 业务层 | Express.js (Node.js) | RESTful API 与业务调度 |
-| 计算层 | Flask (Python) + SciPy | SPAR-H 量化算法 |
-| 数据库 | SQLite (开发) / MySQL (生产) | 结构化数据持久化 |
-
-## 快速开始
-
-### 环境要求
-- Node.js >= 16
-- Python >= 3.9
-- pip
-
-### 1. 安装依赖
-
-```bash
-# 后端依赖
-cd backend && npm install
-
-# SPAR-H 计算服务依赖
-cd ../spar-h-service && pip install -r requirements.txt
-
-# 前端依赖
-cd ../frontend && npm install
-```
-
-### 2. 启动服务
-
-```bash
-# 终端 1 - 启动 SPAR-H 计算服务 (端口 5001)
-cd spar-h-service && python3 app.py
-
-# 终端 2 - 启动后端 API 服务 (端口 3000)
-cd backend && npm start
-
-# 终端 3 - 启动前端开发服务器 (端口 8080)
-cd frontend && npm run dev
-```
-
-### 3. 访问系统
-
-浏览器打开 http://localhost:8080
-
-默认账户：`admin / admin123`
-
-## 项目结构
-
-```
-longchu/
-├── sql/                    # MySQL 兼容数据库脚本
-│   └── init.sql
-├── backend/                # Express.js 后端服务
-│   └── src/
-│       ├── app.js          # 主入口
-│       ├── config/
-│       │   └── database.js # SQLite 数据库初始化 + 种子数据
-│       ├── middleware/
-│       │   └── auth.js     # JWT 认证
-│       └── routes/
-│           ├── events.js   # 事件管理
-│           ├── tasks.js    # 任务单元
-│           ├── tags.js     # 标签管理
-│           ├── factors.js  # 影响因素
-│           ├── persons.js  # 人员管理
-│           ├── evidence.js # 证据链
-│           ├── analysis.js # HRA 分析案例
-│           └── users.js    # 用户认证
-├── spar-h-service/         # Flask SPAR-H 计算微服务
-│   ├── app.py              # Flask 入口
-│   ├── spar_h_engine.py    # 核心计算引擎
-│   └── routes.py           # 计算 API 路由
-└── frontend/               # Vue 3 前端
-    └── src/
-        ├── App.vue         # 布局（深蓝侧边栏 + 白色主区域）
-        ├── router/         # 路由配置
-        ├── api/            # API 调用封装
-        └── views/
-            ├── events/     # 事件台账、详情、创建
-            ├── statistics/ # 统计分析可视化
-            └── analysis/   # 分析案例、SPAR-H 计算器
-```
-
-## 数据库设计
-
-系统包含 17 张核心数据表：
-
-**事件分析子系统**: event_main, task_unit, scenario_info, tag_dict, event_tag, impact_factor, person_info, event_person, evidence_chain
-
-**可靠性分析子系统**: analysis_case, case_task, case_psf_value, sparh_psf_dict, evidence_index, dependency_assessment, uncertainty_result
-
-**系统管理**: sys_user
+---
 
 ## SPAR-H 计算验证
 
-论文中的 LOCA 事件测试用例：
+论文中的 LOCA 事件测试用例（表4.6）：
 
-| 项目 | 诊断 | 动作 |
-|------|------|------|
-| 基础值 | 0.01 | 0.001 |
+| PSF | 诊断 | 动作 |
+|-----|------|------|
+| 基础值（名义HEP） | 0.01 | 0.001 |
 | 时间 | 0.01 | 0.01 |
 | 压力 | 5 | 2 |
 | 复杂度 | 1 | 1 |
 | 经验/培训 | 0.5 | 0.5 |
 | 规程 | 0.5 | 1 |
-| 工效学 | 1 | 1 |
+| 工效学/人机界面 | 1 | 1 |
 | 职责适宜 | 1 | 1 |
 | 工序 | 1 | 1 |
 
-**计算结果**: 联合人误概率 = **1.35E-4** ✓（与论文一致）
+**计算结果：联合人误概率 = 1.35E-4** （与论文一致）
+
+---
+
+## 常见问题
+
+### Q: `npm install` 报 node-gyp / distutils 错误
+
+```bash
+pip3 install setuptools
+cd backend && rm -rf node_modules && npm install
+```
+
+### Q: 端口被占用
+
+```bash
+lsof -ti:3000 | xargs kill -9   # 后端
+lsof -ti:5001 | xargs kill -9   # Flask
+lsof -ti:8080 | xargs kill -9   # 前端
+```
+
+### Q: 想重置数据库
+
+```bash
+rm backend/data/nuclear_hf.db
+# 重启后端会自动重新创建
+```
+
+### Q: 如何切换到 V2（Spring Boot）版本
+
+```bash
+git checkout v2-springboot
+# 需要 Java 17 + Maven，详见 v2 分支 README
+```
+
+---
 
 ## 参考文献
 
