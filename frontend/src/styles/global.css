@@ -1,0 +1,161 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.app-container {
+  height: 100vh;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #304156;
+  color: #bfcbd9;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 2px;
+}
+
+.sidebar .el-menu {
+  border-right: none;
+  background-color: #304156;
+}
+
+.sidebar .el-menu-item,
+.sidebar .el-sub-menu__title {
+  color: #bfcbd9;
+}
+
+.sidebar .el-menu-item:hover,
+.sidebar .el-sub-menu__title:hover {
+  background-color: #263445;
+}
+
+.sidebar .el-menu-item.is-active {
+  background-color: #409EFF;
+  color: #ffffff;
+}
+
+.sidebar .el-sub-menu .el-menu {
+  background-color: #1f2d3d;
+}
+
+.sidebar .el-sub-menu .el-menu .el-menu-item {
+  padding-left: 50px !important;
+  min-width: 220px;
+}
+
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #f0f2f5;
+}
+
+.main-header {
+  height: 50px;
+  background: #ffffff;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e6e6e6;
+  flex-shrink: 0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 4px;
+}
+
+.search-bar .el-form-item {
+  margin-bottom: 0;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #409EFF;
+}
+
+.stat-card .stat-label {
+  font-size: 14px;
+  color: #909399;
+  margin-top: 8px;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 350px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+  padding-left: 10px;
+  border-left: 3px solid #409EFF;
+}
+
+.three-column-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr 200px;
+  gap: 16px;
+}

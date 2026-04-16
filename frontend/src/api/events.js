@@ -24,14 +24,10 @@ export function getEventStats() {
   return request.get('/events/stats/overview')
 }
 
-export function addEventTask(eventId, data) {
-  return request.post('/tasks', { ...data, event_id: eventId })
+export function addTask(eventId, data) {
+  return request.post(`/events/${eventId}/tasks`, data)
 }
 
-export function addEventTag(eventId, data) {
-  return request.post('/tags/bindEvent', { ...data, event_id: eventId })
-}
-
-export function getTagDict(params) {
-  return request.get('/tags/dict', { params })
+export function addTag(eventId, data) {
+  return request.post(`/events/${eventId}/tags`, data)
 }

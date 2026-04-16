@@ -1,7 +1,7 @@
 {
-  "name": "nuclear-hf-frontend",
+  "name": "frontend",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,13 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.0",
+    "vue": "^3.4.35",
     "vue-router": "^4.3.0",
-    "pinia": "^2.1.0",
-    "element-plus": "^2.7.0",
-    "@element-plus/icons-vue": "^2.3.0",
     "axios": "^1.7.0",
-    "echarts": "^5.5.0"
+    "element-plus": "^2.7.0",
+    "echarts": "^5.5.0",
+    "pinia": "^2.1.7"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.6.0",
