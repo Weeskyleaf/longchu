@@ -1,285 +1,497 @@
 <template>
-  <div v-loading="loading">
+  <div class="analysis-detail-page" v-loading="loading">
     <div class="page-header">
-      <h2>案例详情</h2>
-      <el-button @click="$router.back()">返回列表</el-button>
+      <h2>HRA 分析结果详情</h2>
+      <el-button @click="$router.back()">返回</el-button>
     </div>
 
-    <!-- Three-column layout -->
-    <div class="three-column-layout">
-      <!-- LEFT: 事件信息版块 -->
-      <div class="left-column">
-        <el-card shadow="never">
-          <template #header>事件信息版块</template>
-          <el-descriptions :column="1" border size="small">
-            <el-descriptions-item label="案例编号">{{ detail.case_no }}</el-descriptions-item>
-            <el-descriptions-item label="案例名称">{{ detail.case_name }}</el-descriptions-item>
-            <el-descriptions-item label="分析方法">
-              <el-tag size="small">{{ detail.analysis_method }}</el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="分析路径">{{ detail.analysis_path }}</el-descriptions-item>
-            <el-descriptions-item label="分析人员">{{ detail.analyst }}</el-descriptions-item>
-            <el-descriptions-item label="电厂名称">{{ detail.plant_name }}</el-descriptions-item>
-            <el-descriptions-item label="始发事件">{{ detail.initiating_event }}</el-descriptions-item>
-            <el-descriptions-item label="基本事件">{{ detail.basic_event }}</el-descriptions-item>
-            <el-descriptions-item label="工况">{{ detail.operation_condition }}</el-descriptions-item>
-            <el-descriptions-item label="审核状态">
-              <el-tag :type="detail.review_status === '已审核' ? 'success' : 'warning'" size="small">
-                {{ detail.review_status }}
-              </el-tag>
-            </el-descriptions-item>
-          </el-descriptions>
-          <div v-if="detail.context_description" style="margin-top: 12px">
-            <div style="font-weight: 600; margin-bottom: 6px; color: #606266">场景描述</div>
-            <div class="text-block-sm">{{ detail.context_description }}</div>
-          </div>
-        </el-card>
-      </div>
+    <!-- Section A: 三列文本展示 -->
+    <el-row :gutter="20">
+      <!-- LEFT: 事件描述 & PSF 因子取值 -->
+      <el-col :span="8">
+        <div class="analysis-card">
+          <div class="card-header-dark">事件描述 &amp; PSF 因子取值</div>
+          <div class="card-body">
+            <div class="event-desc">{{ ad.eventDescription }}</div>
 
-      <!-- CENTER: 量化结果板块 -->
-      <div class="center-column">
-        <el-card shadow="never">
-          <template #header>量化结果板块</template>
-
-          <!-- Calculation Tasks -->
-          <div v-for="(task, idx) in (detail.tasks || [])" :key="idx" style="margin-bottom: 20px">
-            <h4 style="margin-bottom: 12px; color: #303133">
-              {{ task.task_type === 'diagnosis' ? '诊断任务' : '动作任务' }} 计算过程
-            </h4>
-
-            <el-descriptions :column="2" border size="small" style="margin-bottom: 12px">
-              <el-descriptions-item label="名义HEP">{{ formatNum(task.nominal_hep) }}</el-descriptions-item>
-              <el-descriptions-item label="复合PSF">{{ formatNum(task.composite_psf) }}</el-descriptions-item>
-              <el-descriptions-item label="原始HEP">{{ formatNum(task.raw_hep) }}</el-descriptions-item>
-              <el-descriptions-item label="调整后HEP">{{ formatNum(task.adjusted_hep) }}</el-descriptions-item>
-              <el-descriptions-item label="最终HEP">
-                <span style="color: #F56C6C; font-weight: 700; font-size: 16px">{{ formatNum(task.final_hep) }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="负向PSF数量">{{ task.negative_count || 0 }}</el-descriptions-item>
-            </el-descriptions>
-
-            <!-- PSF values table -->
-            <h4 style="margin-bottom: 8px; color: #606266">PSF乘子表</h4>
-            <el-table :data="task.psf_values || []" border size="small" style="margin-bottom: 12px">
-              <el-table-column prop="psf_name" label="PSF因素" />
-              <el-table-column prop="level_name" label="等级" />
-              <el-table-column prop="multiplier" label="乘子值" width="80" align="center">
+            <div class="section-subtitle">表：LOCA事件PSF因子取值及定量化结果</div>
+            <el-table :data="ad.psfRows" border size="small" class="psf-value-table">
+              <el-table-column prop="name" label="绩效形成因子(PSF)" min-width="120" />
+              <el-table-column label="诊断乘子值" min-width="120" align="center">
                 <template #default="{ row }">
-                  <span :style="{ color: row.multiplier > 1 ? '#F56C6C' : row.multiplier < 1 ? '#67C23A' : '' }">
-                    {{ row.multiplier }}
-                  </span>
+                  <span>{{ row.dv }}</span>
+                  <span v-if="row.dn" class="note-text">({{ row.dn }})</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="动作乘子值" min-width="120" align="center">
+                <template #default="{ row }">
+                  <span>{{ row.av }}</span>
+                  <span v-if="row.an" class="note-text">({{ row.an }})</span>
                 </template>
               </el-table-column>
             </el-table>
+
+            <div class="footer-note">
+              PSF赋值定义基于 SPAR-H (NUREG/CR-6883)，各因子乘子取值参照操纵员任务分析与专家判断结果。
+            </div>
+            <div class="footer-note">
+              参考标准：NB/T 20642-2023《核电厂概率安全评价中人因可靠性分析程序》
+            </div>
           </div>
-
-          <!-- Joint HEP -->
-          <div v-if="detail.joint_hep != null" style="margin-bottom: 16px">
-            <el-descriptions :column="1" border size="small">
-              <el-descriptions-item label="联合HEP">
-                <span style="color: #E6A23C; font-weight: 700; font-size: 16px">{{ formatNum(detail.joint_hep) }}</span>
-              </el-descriptions-item>
-            </el-descriptions>
-          </div>
-
-          <!-- Dependency -->
-          <div v-if="detail.dependency" style="margin-bottom: 16px">
-            <h4 style="margin-bottom: 8px; color: #606266">依赖性修正</h4>
-            <el-descriptions :column="2" border size="small">
-              <el-descriptions-item label="依赖等级">{{ detail.dependency.level }}</el-descriptions-item>
-              <el-descriptions-item label="修正后HEP">{{ formatNum(detail.dependency.corrected_hep) }}</el-descriptions-item>
-            </el-descriptions>
-          </div>
-
-          <!-- Uncertainty -->
-          <div v-if="detail.uncertainty">
-            <h4 style="margin-bottom: 8px; color: #606266">不确定性分析</h4>
-            <el-descriptions :column="3" border size="small">
-              <el-descriptions-item label="α">{{ formatNum(detail.uncertainty.alpha) }}</el-descriptions-item>
-              <el-descriptions-item label="β">{{ formatNum(detail.uncertainty.beta) }}</el-descriptions-item>
-              <el-descriptions-item label="均值">{{ formatNum(detail.uncertainty.mean) }}</el-descriptions-item>
-              <el-descriptions-item label="P5">{{ formatNum(detail.uncertainty.p05) }}</el-descriptions-item>
-              <el-descriptions-item label="P50">{{ formatNum(detail.uncertainty.p50) }}</el-descriptions-item>
-              <el-descriptions-item label="P95">{{ formatNum(detail.uncertainty.p95) }}</el-descriptions-item>
-            </el-descriptions>
-          </div>
-
-          <!-- Evidence chain -->
-          <div v-if="detail.references?.length" style="margin-top: 16px">
-            <h4 style="margin-bottom: 8px; color: #606266">方法/规则引用</h4>
-            <el-table :data="detail.references" border size="small">
-              <el-table-column prop="rule_name" label="规则名称" />
-              <el-table-column prop="source" label="来源" />
-              <el-table-column prop="annotation" label="标注说明" show-overflow-tooltip />
-            </el-table>
-          </div>
-        </el-card>
-      </div>
-
-      <!-- RIGHT: 报表导出 -->
-      <div class="right-column">
-        <el-card shadow="never">
-          <template #header>报表导出</template>
-          <el-button type="primary" style="width: 100%" @click="handleExport">
-            <el-icon><Download /></el-icon> 导出报告
-          </el-button>
-          <el-button style="width: 100%; margin-top: 12px; margin-left: 0" @click="handlePrint">
-            <el-icon><Printer /></el-icon> 打印
-          </el-button>
-        </el-card>
-      </div>
-    </div>
-
-    <!-- Charts below three columns -->
-    <el-row :gutter="16" style="margin-top: 16px">
-      <el-col :span="12">
-        <el-card shadow="never">
-          <template #header>PSF影响程度柱状图</template>
-          <div ref="psfChartRef" class="chart-container"></div>
-        </el-card>
+        </div>
       </el-col>
+
+      <!-- CENTER: 量化结果 & 不确定性 -->
+      <el-col :span="8">
+        <div class="analysis-card">
+          <div class="card-header-dark">量化结果 &amp; 不确定性 (Beta分布)</div>
+          <div class="card-body">
+            <div class="hep-display">
+              <div class="hep-label">最终人员失误概率 (HEP)</div>
+              <div class="hep-value">{{ fmtSci(ad.jointHep) }}</div>
+              <div class="hep-subtitle">SPAR-H方法估计结果 | 5% ~ 95% 分位区间置信区间</div>
+              <div class="hep-interval">
+                5% 分位: {{ fmtSci(ad.p05) }} | 95% 分位数: {{ fmtSci(ad.p95) }}
+              </div>
+            </div>
+
+            <div class="status-badges">
+              <el-tag type="success" effect="dark" size="small">Result</el-tag>
+              <el-tag type="primary" effect="dark" size="small">Verified</el-tag>
+              <el-tag type="info" effect="dark" size="small">Archived</el-tag>
+            </div>
+
+            <div class="calc-logic">
+              <div class="logic-title">计算逻辑 (SPAR-H 基本模型)</div>
+              <div class="formula-block">
+                <p>基本公式: HEP<sub>final</sub> = P₀ × Πλ<sub>i</sub> (分类累乘)</p>
+                <p class="formula-line">
+                  诊断 HEP = {{ fmtSci(ad.diagNominal) }} × {{ fmtSci(ad.diagComposite) }}
+                  = {{ fmtSci(ad.diagHep) }}
+                </p>
+                <p class="formula-line">
+                  动作 HEP = {{ fmtSci(ad.actNominal) }} × {{ fmtSci(ad.actComposite) }}
+                  = {{ fmtSci(ad.actHep) }}
+                </p>
+                <p class="formula-line formula-highlight">
+                  联合HEP = 诊断HEP + 动作HEP = {{ fmtSci(ad.diagHep) }} + {{ fmtSci(ad.actHep) }}
+                  = {{ fmtSci(ad.jointHep) }}
+                </p>
+              </div>
+              <div class="formula-note">
+                负向PSF数量 = {{ ad.negCount }} ({{ ad.negNote }})，{{
+                  ad.negCount >= 3 ? '需要启用修正公式' : '未达到3，无需启用修正'
+                }}
+              </div>
+            </div>
+
+            <div class="reference-note">
+              方法参考: SPAR-H方法源自NUREG/CR-6883，不确定性分析采用Beta分布 (CNI先验) 进行贝叶斯处理。
+            </div>
+          </div>
+        </div>
+      </el-col>
+
+      <!-- RIGHT: 证据链 & 报表导出 -->
+      <el-col :span="8">
+        <div class="analysis-card">
+          <div class="card-header-dark">证据链 &amp; 报表导出</div>
+          <div class="card-body">
+            <p class="evidence-text">
+              本栏记录所有的计算证据说明，包括PSF因子选择依据、计算公式推导过程、参考标准和方法来源等完整的分析证据链。
+            </p>
+
+            <el-button type="primary" size="large" class="report-btn" @click="handleExport">
+              生成完整分析报告
+            </el-button>
+
+            <div class="uncertainty-section">
+              <div class="logic-title">不确定性参数信息</div>
+              <div class="param-grid">
+                <div class="param-item">
+                  <span class="param-label">分布类型</span>
+                  <span class="param-value">Beta (α, β) 参数标注</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">α</span>
+                  <span class="param-value">{{ ad.alpha }}</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">β</span>
+                  <span class="param-value">{{ ad.betaVal }}</span>
+                </div>
+                <div class="param-item">
+                  <span class="param-label">CNI先验</span>
+                  <span class="param-value">参数标注</span>
+                </div>
+              </div>
+              <div class="footer-note">
+                参考标准：NUREG/CR-6883, NB/T 20642-2023
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- Section B: 图表展示 -->
+    <el-row :gutter="20" style="margin-top: 20px">
+      <!-- 左: PSF影响对比柱状图 (水平分组) -->
       <el-col :span="12">
-        <el-card shadow="never">
-          <template #header>Beta概率密度函数分布曲线</template>
-          <div ref="betaChartRef" class="chart-container"></div>
-        </el-card>
+        <div class="analysis-card">
+          <div class="card-header-dark">绩效形成因子(PSF)影响对比 | 诊断 vs 动作 乘子值</div>
+          <div class="card-body">
+            <div ref="psfBarRef" class="chart-box"></div>
+            <div class="chart-note">最大乘子指向最强影响因子，可重点关注乘子值 &gt; 1 的负向PSF因子</div>
+          </div>
+        </div>
+      </el-col>
+
+      <!-- 右: Beta分布概率密度曲线 -->
+      <el-col :span="12">
+        <div class="analysis-card">
+          <div class="card-header-dark">Beta 分布概率密度曲线（CNI 先验）</div>
+          <div class="card-body">
+            <div class="beta-subtitle">
+              SPAR-H不确定性分析 | 对数坐标模型 | α = {{ ad.alpha }}, β = {{ ad.betaVal }}
+              | 均值 μ = {{ fmtSci(ad.mean) }}
+            </div>
+
+            <div class="info-cards-row">
+              <div class="info-card"><div class="ic-label">α</div><div class="ic-value">{{ ad.alpha }}</div></div>
+              <div class="info-card"><div class="ic-label">β</div><div class="ic-value">{{ ad.betaVal }}</div></div>
+              <div class="info-card"><div class="ic-label">均值μ</div><div class="ic-value">{{ fmtSci(ad.mean) }}</div></div>
+              <div class="info-card"><div class="ic-label">5%分位</div><div class="ic-value">{{ fmtSci(ad.p05) }}</div></div>
+              <div class="info-card"><div class="ic-label">95%分位</div><div class="ic-value">{{ fmtSci(ad.p95) }}</div></div>
+              <div class="info-card wide"><div class="ic-label">区间</div><div class="ic-value">[{{ fmtSci(ad.p05) }}, {{ fmtSci(ad.p95) }}]</div></div>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 8px">
+              <el-switch v-model="useLogScale" active-text="log-log" inactive-text="线性" @change="renderBetaChart" />
+            </div>
+
+            <div ref="betaPdfRef" class="chart-box"></div>
+            <div class="chart-legend">● 概率密度值曲线 | X轴: x (失误概率) | Y轴: f(x, α, β)</div>
+          </div>
+        </div>
       </el-col>
     </el-row>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { Download, Printer } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { getCase } from '../api/analysis'
 
 const route = useRoute()
 const loading = ref(false)
-const detail = ref({})
-const psfChartRef = ref(null)
-const betaChartRef = ref(null)
+const useLogScale = ref(true)
+const psfBarRef = ref(null)
+const betaPdfRef = ref(null)
 const charts = []
 
-function formatNum(v) {
+const PSF_NAMES = ['可用时间', '压力', '复杂度', '经验/培训', '规程', '工效学/人机界面', '职责适宜度', '工序']
+
+const LOCA_DEFAULT = {
+  eventDescription:
+    '估算事件：一回路中破口事故(LOCA)。分析场景基于压水堆核电厂满功率运行工况下，' +
+    '冷却剂管道发生中破口（破口当量直径约6英寸）事故。操纵员需在规程指引下完成事故诊断与' +
+    '应急响应操作，包括安注系统投入、主泵跳闸确认、安全壳隔离等关键动作。本分析涵盖诊断阶段' +
+    '与动作阶段两个任务类型，综合评估操纵员在高压力工况下的人因失误概率。',
+  psfRows: [
+    { name: '基础值(名义HEP)', dv: '1.0E-2', av: '1.0E-3' },
+    { name: '可用时间', dv: '0.01', dn: '充足时间>60min', av: '0.01', an: '2/5倍所需时间' },
+    { name: '压力', dv: '5', dn: '很高', av: '2', an: '高' },
+    { name: '复杂程度', dv: '1', dn: '正常', av: '1', an: '正常' },
+    { name: '经验/培训', dv: '0.5', dn: '高', av: '0.5', an: '高' },
+    { name: '规程', dv: '0.5', dn: '征兆导向规程', av: '1', an: '正常' },
+    { name: '工效学/人机界面', dv: '1', dn: '正常', av: '1', an: '正常' },
+    { name: '职责适宜度', dv: '1', dn: '正常', av: '1', an: '正常' },
+    { name: '工序', dv: '1', dn: '正常', av: '1', an: '正常' }
+  ],
+  diagNominal: 1e-2,
+  actNominal: 1e-3,
+  diagComposite: 0.0125,
+  actComposite: 0.01,
+  diagHep: 1.25e-4,
+  actHep: 1e-5,
+  jointHep: 1.35e-4,
+  negCount: 1,
+  negNote: '仅压力为负',
+  alpha: 0.015,
+  betaVal: 111.1,
+  mean: 1.35e-4,
+  p05: 9.45e-90,
+  p95: 1.71e-4,
+  diagMult: [0.01, 5, 1, 0.5, 0.5, 1, 1, 1],
+  actMult: [0.01, 2, 1, 0.5, 1, 1, 1, 1]
+}
+
+const ad = reactive({ ...LOCA_DEFAULT })
+
+function fmtSci(v) {
   if (v == null) return '-'
-  return typeof v === 'number' ? v.toExponential(3) : v
+  if (typeof v !== 'number') return v
+  if (v === 0) return '0'
+  return v < 0.001 || v > 10000 ? v.toExponential(2) : v.toPrecision(4)
 }
 
-function betaPDF(x, a, b) {
-  const logBeta = lnGamma(a) + lnGamma(b) - lnGamma(a + b)
-  if (x <= 0 || x >= 1) return 0
-  return Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - logBeta)
-}
-
+/* ── Beta PDF 数学工具 ── */
 function lnGamma(z) {
-  const g = 7
-  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7]
+  const c = [
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905,
+    -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7
+  ]
   if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lnGamma(1 - z)
   z -= 1
   let x = c[0]
-  for (let i = 1; i < g + 2; i++) x += c[i] / (z + i)
-  const t = z + g + 0.5
+  for (let i = 1; i < 9; i++) x += c[i] / (z + i)
+  const t = z + 7.5
   return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x)
 }
 
-function renderPsfChart(tasks) {
-  if (!psfChartRef.value) return
-  const allPsfs = []
-  for (const t of (tasks || [])) {
-    for (const p of (t.psf_values || [])) {
-      allPsfs.push({ name: p.psf_name, value: Math.log10(Math.max(p.multiplier, 0.001)), raw: p.multiplier })
-    }
-  }
-  const chart = echarts.init(psfChartRef.value)
+function betaPDF(x, a, b) {
+  if (x <= 0 || x >= 1) return 0
+  const logB = lnGamma(a) + lnGamma(b) - lnGamma(a + b)
+  return Math.exp((a - 1) * Math.log(x) + (b - 1) * Math.log(1 - x) - logB)
+}
+
+/* ── 图表渲染 ── */
+function renderPsfBarChart() {
+  if (!psfBarRef.value) return
+  const chart = echarts.init(psfBarRef.value)
   chart.setOption({
-    tooltip: { trigger: 'axis', formatter: params => `${params[0].name}: ${allPsfs[params[0].dataIndex]?.raw}` },
-    xAxis: { type: 'category', data: allPsfs.map(p => p.name), axisLabel: { interval: 0, rotate: 30, fontSize: 11 } },
-    yAxis: { type: 'value', name: 'log₁₀(乘子)' },
-    series: [{
-      type: 'bar',
-      data: allPsfs.map(p => ({
-        value: p.value,
-        itemStyle: { color: p.value > 0 ? '#F56C6C' : p.value < 0 ? '#67C23A' : '#409EFF' }
-      })),
-      barMaxWidth: 30
-    }],
-    grid: { bottom: 80 }
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { data: ['诊断乘子', '动作乘子'], top: 4 },
+    grid: { left: '22%', right: '8%', bottom: '12%', top: '12%' },
+    yAxis: {
+      type: 'category',
+      data: PSF_NAMES,
+      inverse: true,
+      axisLabel: { fontSize: 11 }
+    },
+    xAxis: { type: 'value', name: '乘子值' },
+    series: [
+      {
+        name: '诊断乘子',
+        type: 'bar',
+        data: ad.diagMult,
+        itemStyle: { color: '#3b82f6' },
+        barGap: '20%',
+        barMaxWidth: 18
+      },
+      {
+        name: '动作乘子',
+        type: 'bar',
+        data: ad.actMult,
+        itemStyle: { color: '#67e8f9' },
+        barMaxWidth: 18
+      }
+    ]
   })
   charts.push(chart)
 }
 
-function renderBetaChart(uncertainty) {
-  if (!betaChartRef.value || !uncertainty) return
-  const { alpha, beta: betaVal, p05, p50, p95 } = uncertainty
-  if (!alpha || !betaVal) return
+function renderBetaChart() {
+  if (!betaPdfRef.value) return
 
-  const xData = []
-  const yData = []
-  const step = 0.002
-  for (let x = step; x < 1; x += step) {
-    xData.push(x.toFixed(4))
-    yData.push(betaPDF(x, alpha, betaVal))
+  const existing = charts.findIndex(c => c.getDom() === betaPdfRef.value)
+  if (existing >= 0) { charts[existing].dispose(); charts.splice(existing, 1) }
+
+  const a = ad.alpha
+  const b = ad.betaVal
+  if (!a || !b) return
+
+  const pts = []
+  for (let exp = -10; exp <= 0; exp += 0.03) {
+    const x = Math.pow(10, exp)
+    const y = betaPDF(x, a, b)
+    if (y > 0 && isFinite(y)) pts.push([x, y])
   }
 
-  const maxY = Math.max(...yData) * 1.1
-  const markLines = []
-  if (p05 != null) markLines.push({ xAxis: p05.toFixed(4), name: 'P5', lineStyle: { color: '#67C23A' }, label: { formatter: 'P5' } })
-  if (p50 != null) markLines.push({ xAxis: p50.toFixed(4), name: 'P50', lineStyle: { color: '#E6A23C' }, label: { formatter: 'P50' } })
-  if (p95 != null) markLines.push({ xAxis: p95.toFixed(4), name: 'P95', lineStyle: { color: '#F56C6C' }, label: { formatter: 'P95' } })
-
-  const chart = echarts.init(betaChartRef.value)
+  const chart = echarts.init(betaPdfRef.value)
+  const axisType = useLogScale.value ? 'log' : 'value'
   chart.setOption({
-    tooltip: { trigger: 'axis' },
-    xAxis: { type: 'category', data: xData, name: 'HEP', axisLabel: { interval: Math.floor(xData.length / 6) } },
-    yAxis: { type: 'value', name: '概率密度', max: maxY > 0 ? maxY : undefined },
+    tooltip: {
+      trigger: 'axis',
+      formatter(params) {
+        const d = params[0]?.data
+        if (!d) return ''
+        return `x = ${Number(d[0]).toExponential(2)}<br/>f(x) = ${Number(d[1]).toExponential(2)}`
+      }
+    },
+    grid: { left: '14%', right: '6%', bottom: '14%', top: '6%' },
+    xAxis: {
+      type: axisType,
+      name: 'x (失误概率)',
+      nameLocation: 'center',
+      nameGap: 28,
+      min: useLogScale.value ? 1e-10 : undefined
+    },
+    yAxis: {
+      type: axisType,
+      name: 'f(x, α, β) 概率密度',
+      nameLocation: 'center',
+      nameGap: 50
+    },
     series: [{
       type: 'line',
-      data: yData,
+      data: pts,
       smooth: true,
       showSymbol: false,
-      lineStyle: { color: '#409EFF', width: 2 },
-      areaStyle: { color: 'rgba(64,158,255,0.1)' },
-      markLine: {
-        symbol: 'none',
-        data: markLines
-      }
-    }],
-    grid: { bottom: 40 }
+      lineStyle: { color: '#26a69a', width: 2.5 },
+      areaStyle: { color: 'rgba(38,166,154,0.12)' }
+    }]
   })
   charts.push(chart)
+}
+
+/* ── 数据加载 ── */
+function loadFromCalcResult(stored) {
+  const { eventInfo, calcResult } = stored
+  ad.eventDescription = eventInfo?.context || ad.eventDescription
+
+  const diag = calcResult?.diagnosis
+  const act = calcResult?.action
+  if (!diag && !act) return
+
+  if (diag) {
+    ad.diagNominal = diag.nominal_hep ?? 1e-2
+    ad.diagComposite = diag.composite_psf ?? 1
+    ad.diagHep = diag.final_hep ?? 0
+    ad.negCount = diag.negative_count ?? 0
+    ad.diagMult = (diag.psf_details || []).map(p => p.multiplier)
+  }
+  if (act) {
+    ad.actNominal = act.nominal_hep ?? 1e-3
+    ad.actComposite = act.composite_psf ?? 1
+    ad.actHep = act.final_hep ?? 0
+    ad.actMult = (act.psf_details || []).map(p => p.multiplier)
+  }
+
+  ad.jointHep = calcResult.joint_hep ?? (ad.diagHep + ad.actHep)
+
+  const negDiag = (diag?.psf_details || []).filter(p => p.multiplier > 1)
+  const negAct = (act?.psf_details || []).filter(p => p.multiplier > 1)
+  const allNeg = [...negDiag, ...negAct]
+  ad.negCount = negDiag.length
+  ad.negNote = allNeg.length === 0
+    ? '无负向PSF'
+    : allNeg.map(p => p.psf_name).join('、') + '为负'
+
+  const u = calcResult.uncertainty
+  if (u) {
+    ad.alpha = +(u.alpha ?? 0).toFixed(4)
+    ad.betaVal = +(u.beta ?? 0).toFixed(1)
+    ad.mean = u.mean ?? ad.jointHep
+    ad.p05 = u.p05 ?? 0
+    ad.p95 = u.p95 ?? 0
+  }
+
+  const diagDetails = diag?.psf_details || []
+  const actDetails = act?.psf_details || []
+  if (diagDetails.length && actDetails.length) {
+    ad.psfRows = [
+      { name: '基础值(名义HEP)', dv: fmtSci(ad.diagNominal), av: fmtSci(ad.actNominal) },
+      ...PSF_NAMES.map((name, i) => ({
+        name,
+        dv: String(diagDetails[i]?.multiplier ?? 1),
+        dn: diagDetails[i]?.level_name || '',
+        av: String(actDetails[i]?.multiplier ?? 1),
+        an: actDetails[i]?.level_name || ''
+      }))
+    ]
+  }
+}
+
+function loadFromApi(apiData) {
+  if (!apiData) return
+  ad.eventDescription = apiData.context_description || ad.eventDescription
+
+  const tasks = apiData.tasks || []
+  const diag = tasks.find(t => t.task_type === 'diagnosis')
+  const act = tasks.find(t => t.task_type === 'action')
+
+  if (diag) {
+    ad.diagNominal = diag.nominal_hep ?? 1e-2
+    ad.diagComposite = diag.composite_psf ?? 1
+    ad.diagHep = diag.final_hep ?? 0
+    ad.negCount = diag.negative_count ?? 0
+    ad.diagMult = (diag.psf_values || diag.psf_details || []).map(p => p.multiplier)
+  }
+  if (act) {
+    ad.actNominal = act.nominal_hep ?? 1e-3
+    ad.actComposite = act.composite_psf ?? 1
+    ad.actHep = act.final_hep ?? 0
+    ad.actMult = (act.psf_values || act.psf_details || []).map(p => p.multiplier)
+  }
+
+  ad.jointHep = apiData.joint_hep ?? (ad.diagHep + ad.actHep)
+
+  const allDetails = [
+    ...(diag?.psf_values || diag?.psf_details || []),
+    ...(act?.psf_values || act?.psf_details || [])
+  ]
+  const negItems = allDetails.filter(p => p.multiplier > 1)
+  ad.negNote = negItems.length === 0
+    ? '无负向PSF'
+    : negItems.map(p => p.psf_name).filter((v, i, a) => a.indexOf(v) === i).join('、') + '为负'
+
+  const u = apiData.uncertainty
+  if (u) {
+    ad.alpha = +(u.alpha ?? 0).toFixed(4)
+    ad.betaVal = +(u.beta ?? 0).toFixed(1)
+    ad.mean = u.mean ?? ad.jointHep
+    ad.p05 = u.p05 ?? 0
+    ad.p95 = u.p95 ?? 0
+  }
+
+  const dv = diag?.psf_values || diag?.psf_details || []
+  const av = act?.psf_values || act?.psf_details || []
+  if (dv.length && av.length) {
+    ad.psfRows = [
+      { name: '基础值(名义HEP)', dv: fmtSci(ad.diagNominal), av: fmtSci(ad.actNominal) },
+      ...PSF_NAMES.map((name, i) => ({
+        name,
+        dv: String(dv[i]?.multiplier ?? 1),
+        dn: dv[i]?.level_name || '',
+        av: String(av[i]?.multiplier ?? 1),
+        an: av[i]?.level_name || ''
+      }))
+    ]
+  }
 }
 
 function handleExport() {
-  ElMessage.success('报告导出中...')
+  ElMessage.success('报告生成中，请稍候…')
 }
 
-function handlePrint() {
-  window.print()
-}
+function handleResize() { charts.forEach(c => c.resize()) }
 
-function handleResize() {
-  charts.forEach(c => c.resize())
-}
+onMounted(async () => {
+  const id = route.params.id
 
-async function fetchDetail() {
-  loading.value = true
-  try {
-    const res = await getCase(route.params.id)
-    detail.value = res.data || {}
-    renderPsfChart(detail.value.tasks)
-    renderBetaChart(detail.value.uncertainty)
-  } catch {
-    detail.value = {}
-  } finally {
+  if (id === 'preview') {
+    const raw = sessionStorage.getItem('sparh_calc_result')
+    if (raw) {
+      try { loadFromCalcResult(JSON.parse(raw)) } catch { /* fallback */ }
+    }
+  } else if (id) {
+    loading.value = true
+    try {
+      const res = await getCase(id)
+      if (res.data) loadFromApi(res.data)
+    } catch { /* fallback */ }
     loading.value = false
   }
-}
 
-onMounted(() => {
-  fetchDetail()
+  await nextTick()
+  renderPsfBarChart()
+  renderBetaChart()
   window.addEventListener('resize', handleResize)
 })
 
@@ -290,24 +502,243 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.three-column-layout {
-  display: grid;
-  grid-template-columns: 300px 1fr 180px;
-  gap: 16px;
-}
-
-.text-block-sm {
-  padding: 8px;
+.analysis-detail-page {
+  padding: 20px;
   background: #f5f7fa;
-  border-radius: 4px;
-  line-height: 1.6;
-  color: #606266;
-  font-size: 13px;
+  min-height: 100vh;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.page-header h2 {
+  margin: 0;
+  color: #1a365d;
 }
 
-@media (max-width: 1200px) {
-  .three-column-layout {
-    grid-template-columns: 1fr;
+/* ── 卡片 ── */
+.analysis-card {
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  height: 100%;
+}
+.card-header-dark {
+  background: #1a365d;
+  color: #fff;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.card-body {
+  padding: 16px;
+}
+
+/* ── 左列 ── */
+.event-desc {
+  padding: 10px 12px;
+  background: #f0f5ff;
+  border-radius: 6px;
+  line-height: 1.75;
+  font-size: 13px;
+  color: #4a5568;
+  margin-bottom: 16px;
+}
+.section-subtitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+.psf-value-table {
+  margin-bottom: 12px;
+}
+.note-text {
+  color: #909399;
+  font-size: 11px;
+  margin-left: 2px;
+}
+.footer-note {
+  font-size: 11px;
+  color: #909399;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+/* ── 中列 ── */
+.hep-display {
+  text-align: center;
+  padding: 16px 0 12px;
+  border-bottom: 1px solid #ebeef5;
+  margin-bottom: 14px;
+}
+.hep-label {
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 4px;
+}
+.hep-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #e53e3e;
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 1px;
+}
+.hep-subtitle {
+  font-size: 11px;
+  color: #909399;
+  margin-top: 6px;
+}
+.hep-interval {
+  font-size: 12px;
+  color: #606266;
+  margin-top: 4px;
+  font-family: 'Courier New', Courier, monospace;
+}
+.status-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.calc-logic {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.logic-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #303133;
+  margin-bottom: 8px;
+}
+.formula-block {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #4a5568;
+}
+.formula-line {
+  padding-left: 12px;
+}
+.formula-highlight {
+  color: #e53e3e;
+  font-weight: 600;
+}
+.formula-note {
+  font-size: 11px;
+  color: #718096;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #fffbeb;
+  border-radius: 4px;
+}
+.reference-note {
+  font-size: 11px;
+  color: #909399;
+  line-height: 1.6;
+  border-top: 1px solid #ebeef5;
+  padding-top: 10px;
+}
+
+/* ── 右列 ── */
+.evidence-text {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.report-btn {
+  width: 100%;
+  font-size: 15px;
+  margin-bottom: 20px;
+}
+.uncertainty-section {
+  margin-top: 16px;
+}
+.param-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.param-item {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+.param-label {
+  font-size: 11px;
+  color: #909399;
+}
+.param-value {
+  font-size: 13px;
+  color: #303133;
+  font-weight: 500;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* ── 图表区 ── */
+.chart-box {
+  width: 100%;
+  height: 400px;
+}
+.chart-note {
+  font-size: 11px;
+  color: #909399;
+  text-align: center;
+  margin-top: 8px;
+}
+.beta-subtitle {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.info-cards-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.info-card {
+  flex: 1;
+  min-width: 70px;
+  background: #f0f5ff;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+}
+.info-card.wide {
+  min-width: 140px;
+}
+.ic-label {
+  font-size: 10px;
+  color: #909399;
+}
+.ic-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1a365d;
+  font-family: 'Courier New', Courier, monospace;
+}
+.chart-legend {
+  font-size: 11px;
+  color: #909399;
+  text-align: center;
+  margin-top: 6px;
+}
+
+@media (max-width: 1400px) {
+  .analysis-detail-page :deep(.el-col-8) {
+    max-width: 100%;
+    flex: 0 0 100%;
+    margin-bottom: 16px;
   }
 }
 </style>

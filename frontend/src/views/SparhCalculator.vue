@@ -136,7 +136,13 @@
         </el-descriptions>
       </div>
 
-      <!-- Dependency section -->
+      <el-divider />
+      <div style="text-align: center; margin-bottom: 16px">
+        <el-button type="success" size="large" @click="viewFullReport">
+          查看完整分析报告
+        </el-button>
+      </div>
+
       <el-divider />
       <h4 style="margin-bottom: 12px; color: #606266">依赖性分析（可选）</h4>
       <el-form :inline="true" style="margin-bottom: 12px">
@@ -178,9 +184,14 @@
       </el-row>
 
       <el-divider />
-      <el-button type="primary" size="large" @click="handleSave" :loading="saving">
-        保存为分析案例
-      </el-button>
+      <div style="display: flex; gap: 16px; justify-content: center">
+        <el-button type="primary" size="large" @click="handleSave" :loading="saving">
+          保存为分析案例
+        </el-button>
+        <el-button type="success" size="large" @click="viewFullReport">
+          查看完整分析报告
+        </el-button>
+      </div>
     </el-card>
 
     <!-- Navigation buttons -->
@@ -571,6 +582,21 @@ async function handleNext() {
   } else {
     currentStep.value++
   }
+}
+
+function viewFullReport() {
+  const reportData = {
+    eventInfo: { ...eventInfo },
+    taskConfig: { operation_mode: taskConfig.operation_mode, task_types: [...taskConfig.task_types] },
+    calcResult: {
+      diagnosis: calcResult.diagnosis,
+      action: calcResult.action,
+      joint_hep: calcResult.joint_hep,
+      uncertainty: calcResult.uncertainty
+    }
+  }
+  sessionStorage.setItem('sparh_calc_result', JSON.stringify(reportData))
+  router.push({ name: 'AnalysisDetail', params: { id: 'preview' } })
 }
 
 async function handleSave() {

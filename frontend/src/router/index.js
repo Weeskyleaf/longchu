@@ -21,6 +21,12 @@ const routes = [
     meta: { title: '事件详情', group: '人因事件分析' }
   },
   {
+    path: '/events/:id/evidence',
+    name: 'EvidenceChain',
+    component: () => import('../views/EvidenceChain.vue'),
+    meta: { title: '证据链', group: '人因事件分析' }
+  },
+  {
     path: '/statistics',
     name: 'Statistics',
     component: () => import('../views/Statistics.vue'),
