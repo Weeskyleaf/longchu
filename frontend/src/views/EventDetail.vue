@@ -18,7 +18,7 @@
       </div>
 
       <div class="nav-tabs">
-        <span v-for="(tab, idx) in navTabs" :key="idx" class="nav-tab" :class="{ active: activeTab === idx }" @click="activeTab = idx">{{ tab }}</span>
+        <span v-for="(tab, idx) in navTabs" :key="idx" class="nav-tab" :class="{ active: activeTab === idx }" @click="scrollToSection(idx)">{{ tab.label }}</span>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
     <el-row :gutter="16" class="section-row">
       <el-col :span="12">
         <div class="section-card">
-          <div class="section-heading">基本信息</div>
+          <div id="section-basic" class="section-heading">基本信息</div>
           <el-descriptions :column="1" border class="info-desc">
             <el-descriptions-item label="事件编号">{{ event.event_code || event.event_no }}</el-descriptions-item>
             <el-descriptions-item label="事件名称">{{ event.event_title }}</el-descriptions-item>
@@ -74,7 +74,7 @@
       </el-col>
       <el-col :span="12">
         <div class="section-card">
-          <div class="section-heading">结构化标签与影响因素</div>
+          <div id="section-tags" class="section-heading">结构化标签与影响因素</div>
 
           <div class="sub-heading">标签分类</div>
           <div class="tag-group">
@@ -98,14 +98,14 @@
     </el-row>
 
     <div class="section-card section-row">
-      <div class="section-heading">事件摘要</div>
+      <div id="section-summary" class="section-heading">事件摘要</div>
       <div class="summary-block">{{ event.event_summary || event.raw_text || '暂无摘要信息' }}</div>
     </div>
 
     <el-row :gutter="16" class="section-row">
       <el-col :span="12">
         <div class="section-card">
-          <div class="section-heading">事件进展序列</div>
+          <div id="section-timeline" class="section-heading">事件进展序列</div>
           <div class="section-sub-desc">基于事件时间线还原关键操作节点</div>
           <el-timeline class="event-timeline">
             <el-timeline-item v-for="(item, idx) in eventSequence" :key="idx" :color="idx === 0 ? '#f56c6c' : '#409eff'">
@@ -151,7 +151,18 @@ const loading = ref(false)
 const event = ref({})
 const activeTab = ref(0)
 
-const navTabs = ['基本信息/量', '登录人/情报', '事件过程/描述', '可视信息描述']
+const navTabs = [
+  { label: '基本信息/量', anchor: 'section-basic' },
+  { label: '登录人/情报', anchor: 'section-tags' },
+  { label: '事件过程/描述', anchor: 'section-summary' },
+  { label: '可视信息描述', anchor: 'section-timeline' },
+]
+
+function scrollToSection(idx) {
+  activeTab.value = idx
+  const el = document.getElementById(navTabs[idx].anchor)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 const typeTagMap = {
   '设备故障': 'danger', '人因失误': 'warning', '程序缺陷': '',
