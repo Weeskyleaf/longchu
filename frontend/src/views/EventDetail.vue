@@ -253,7 +253,12 @@ async function fetchDetail() {
   loading.value = true
   try {
     const res = await getEvent(route.params.id)
-    event.value = res.data || {}
+    const d = res.data || {}
+    if (d.event) {
+      event.value = { ...d.event, tasks: d.tasks || [], tags: d.tags || [], factors: d.factors || [], evidence: d.evidences || d.evidence || [] }
+    } else {
+      event.value = d
+    }
   } catch {
     event.value = {}
   } finally {

@@ -19,6 +19,7 @@ public class EventService {
     private final EventMainRepository eventMainRepository;
     private final TaskUnitRepository taskUnitRepository;
     private final EventTagRepository eventTagRepository;
+    private final TagDictRepository tagDictRepository;
     private final ImpactFactorRepository impactFactorRepository;
     private final EvidenceChainRepository evidenceChainRepository;
     private final ScenarioInfoRepository scenarioInfoRepository;
@@ -36,6 +37,21 @@ public class EventService {
         EventMain event = getById(id);
         List<TaskUnit> tasks = taskUnitRepository.findByEventId(id);
         List<EventTag> tags = eventTagRepository.findByEventId(id);
+        List<Map<String, Object>> enrichedTags = tags.stream().map(tag -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", tag.getId());
+            m.put("event_id", tag.getEventId());
+            m.put("tag_id", tag.getTagId());
+            m.put("review_status", tag.getReviewStatus());
+            m.put("created_at", tag.getCreatedAt());
+            tagDictRepository.findById(tag.getTagId()).ifPresent(td -> {
+                m.put("tag_name", td.getTagName());
+                m.put("tag_type", td.getTagType());
+                m.put("tag_value", td.getTagValue());
+                m.put("tag_code", td.getTagCode());
+            });
+            return m;
+        }).collect(java.util.stream.Collectors.toList());
         List<ImpactFactor> factors = impactFactorRepository.findByEventId(id);
         List<EvidenceChain> evidences = evidenceChainRepository.findByEventId(id);
         List<ScenarioInfo> scenarios = scenarioInfoRepository.findByEventId(id);
@@ -43,7 +59,7 @@ public class EventService {
         Map<String, Object> detail = new HashMap<>();
         detail.put("event", event);
         detail.put("tasks", tasks);
-        detail.put("tags", tags);
+        detail.put("tags", enrichedTags);
         detail.put("factors", factors);
         detail.put("evidences", evidences);
         detail.put("scenarios", scenarios);

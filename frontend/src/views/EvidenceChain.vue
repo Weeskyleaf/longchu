@@ -275,13 +275,14 @@ async function fetchEventData() {
   loading.value = true
   try {
     const res = await getEvent(eventId.value)
-    const d = res.data || {}
+    const raw = res.data || {}
+    const d = raw.event ? { ...raw.event, evidence: raw.evidences || raw.evidence || [] } : raw
     eventData.value = d
     evidenceList.value = d.evidence || []
-    if (d.event_no || d.event_code) form.relatedEventNo = d.event_no || d.event_code
+    if (d.event_code) form.relatedEventNo = d.event_code
     if (d.evidence?.length) {
       const latest = d.evidence[d.evidence.length - 1]
-      currentVersion.value = latest.version_info || 'V1.3'
+      currentVersion.value = latest.version_no || 'V1.3'
     }
   } catch {
     eventData.value = { event_no: `HFE-${eventId.value || '0000'}` }
