@@ -414,6 +414,10 @@ seedIfEmpty('event_main', () => {
     (event_id, task_id, factor_category, factor_name, factor_level, factor_value, assessment_basis, data_source)
     VALUES (?,?,?,?,?,?,?,?)`);
 
+  const insEventTag = db.prepare(`INSERT INTO event_tag
+    (event_id, tag_id, review_status, created_at)
+    VALUES (?,?,?,datetime('now'))`);
+
   const batch = db.transaction(() => {
     // ── Persons
     insPerson.run('P-001', '王建国', '运行处', '高级操纵员', 15, 'SRO');
@@ -424,7 +428,7 @@ seedIfEmpty('event_main', () => {
 
     // ── Event 1
     let eid = insEvent.run(
-      'EVT-2024-001', '1号机组主给水流量控制阀误动作事件',
+      'HF-2026-001', '1号机组主给水流量控制阀误动作事件',
       '设备故障', '人因事件', '操作失误',
       '2024-03-15 14:30:00', '大亚湾核电站', '1', '主给水系统',
       '满功率运行', '运行影响', '机组降功率至80%FP',
@@ -438,10 +442,12 @@ seedIfEmpty('event_main', () => {
     insEvidence.run(eid, '运行日志', 'DOC-2024-0315-01', '1号机组运行日志', '运行处档案', '第15页', '14:30主给水流量控制阀开度突降至30%', 'V1.0', '王建国', '2024-03-15');
     insFactor.run(eid, tid, '界面设计', '人机界面', '中等', 2.0, 'DCS画面上控制回路标识不够清晰', 'SPAR-H');
     insFactor.run(eid, tid, '培训', '经验培训', '标称', 1.0, '操纵员已接受标准培训', 'SPAR-H');
+    insEventTag.run(eid, 2, 'approved');
+    insEventTag.run(eid, 7, 'approved');
 
     // ── Event 2
     eid = insEvent.run(
-      'EVT-2024-002', '2号机组安全壳隔离阀未按时关闭事件',
+      'HF-2026-002', '2号机组安全壳隔离阀未按时关闭事件',
       '人因失误', '人因事件', '遗漏错误',
       '2024-04-22 09:15:00', '秦山核电站', '2', '安全壳隔离系统',
       '冷停堆', '安全相关', '安全壳完整性短暂受损',
@@ -452,10 +458,12 @@ seedIfEmpty('event_main', () => {
     insScenario.run(eid, tid, '冷停堆恢复场景', '反应堆冷停堆，正在恢复', '主控室正常', '安全壳状态监测画面', '停堆运行规程SOP-CT-003', '低时间压力但有明确的规程时间节点要求');
     insEP.run(eid, 2, '直接责任人', '负责安全壳隔离阀操作', '遗漏了规程中的操作步骤');
     insEvidence.run(eid, '事件报告', 'DOC-2024-0422-01', '2号机组安全壳隔离阀未关闭事件报告', '安全处', '全文', '操纵员在检查清单中遗漏第23项操作步骤', 'V1.0', '李明', '2024-04-22');
+    insEventTag.run(eid, 1, 'approved');
+    insEventTag.run(eid, 8, 'pending');
 
     // ── Event 3
     eid = insEvent.run(
-      'EVT-2024-003', '3号机组硼浓度调节超差事件',
+      'HF-2026-003', '3号机组硼浓度调节超差事件',
       '操作偏差', '人因事件', '执行错误',
       '2024-05-08 22:45:00', '福清核电站', '3', '化学和容积控制系统',
       '功率运行', '运行影响', '硼浓度偏差已纠正，未影响反应性控制',
@@ -466,10 +474,12 @@ seedIfEmpty('event_main', () => {
     insScenario.run(eid, tid, '夜班硼稀释调节场景', '反应堆功率运行', '夜间主控室，低照明模式', 'CVCS操作画面和硼浓度趋势', '硼调节操作规程', '低时间压力，但夜班疲劳因素需考虑');
     insFactor.run(eid, tid, '适健状态', '疲劳', '降级', 5.0, '夜班22:45发生，操纵员处于疲劳状态', 'SPAR-H');
     insFactor.run(eid, tid, '复杂度', '计算复杂度', '中等', 2.0, '硼浓度稀释量计算需要多步骤', 'SPAR-H');
+    insEventTag.run(eid, 5, 'approved');
+    insEventTag.run(eid, 9, 'approved');
 
     // ── Event 4
     eid = insEvent.run(
-      'EVT-2024-004', '1号机组柴油发电机组未能按时启动事件',
+      'HF-2026-004', '1号机组柴油发电机组未能按时启动事件',
       '设备与人因', '人因事件', '维修不当',
       '2024-06-12 10:00:00', '田湾核电站', '1', '应急柴油发电机系统',
       '满功率运行', '安全相关', '备用柴油发电机不可用约4小时',
@@ -479,10 +489,12 @@ seedIfEmpty('event_main', () => {
     tid = insTask.run(eid, 'T-004-01', '柴油发电机燃油系统维修后复位', 'action', '维修阶段', '柴油发电机燃油排气阀', 'MNT-DG-005 第3.4节', '不适用', '维修完成后按检查清单逐项复位设备状态').lastInsertRowid;
     insEP.run(eid, 3, '直接责任人', '负责柴油发电机维修', '未执行维修后检查清单中的排气阀复位步骤');
     insEvidence.run(eid, '维修记录', 'DOC-2024-0612-01', '1号柴油发电机定期维修记录', '维修处', '第8页', '维修后检查清单第12项"排气阀复位"未勾选', 'V1.0', '张丽华', '2024-06-12');
+    insEventTag.run(eid, 1, 'approved');
+    insEventTag.run(eid, 4, 'pending');
 
     // ── Event 5
     eid = insEvent.run(
-      'EVT-2024-005', '2号机组控制棒异常落棒事件',
+      'HF-2026-005', '2号机组控制棒异常落棒事件',
       '操作失误', '人因事件', '操作失误',
       '2024-07-03 16:20:00', '红沿河核电站', '2', '控制棒驱动系统',
       '升功率', '安全相关', '机组自动停堆，安全停堆成功',
@@ -493,10 +505,12 @@ seedIfEmpty('event_main', () => {
     insScenario.run(eid, tid, '升功率控制棒调整场景', '反应堆升功率阶段', '主控室正常，多人在场', '控制棒位置显示画面', '升功率运行规程', '无明显时间压力，但操作需精确性');
     insEP.run(eid, 1, '直接责任人', '执行控制棒调整操作', '误触相邻控制棒组按钮');
     insFactor.run(eid, tid, '人机界面', '控制面板布局', '低于标准', 10.0, '控制棒操作按钮间距过小，相邻按钮容易误触', 'SPAR-H');
+    insEventTag.run(eid, 2, 'approved');
+    insEventTag.run(eid, 7, 'approved');
 
     // ── Event 6
     eid = insEvent.run(
-      'EVT-2024-006', '化学取样过程中放射性物质泄漏事件',
+      'HF-2026-006', '化学取样过程中放射性物质泄漏事件',
       '操作偏差', '人因事件', '违章操作',
       '2024-07-28 11:30:00', '宁德核电站', '1', '取样系统',
       '满功率运行', '运行影响', '局部区域放射性轻微超标，24小时内恢复',
@@ -505,10 +519,12 @@ seedIfEmpty('event_main', () => {
 
     insTask.run(eid, 'T-006-01', '一回路水样采集操作', 'action', '取样阶段', '一回路取样阀', 'CHP-SA-002 第2.3节', '30分钟', '按取样规程操作取样阀并收集水样');
     insEP.run(eid, 5, '分析责任人', '安全监督与事件分析', '事后开展事件分析和根本原因调查');
+    insEventTag.run(eid, 6, 'approved');
+    insEventTag.run(eid, 10, 'pending');
 
     // ── Event 7
     eid = insEvent.run(
-      'EVT-2024-007', '主控室火灾报警误判导致不当响应事件',
+      'HF-2026-007', '主控室火灾报警误判导致不当响应事件',
       '判断失误', '人因事件', '诊断错误',
       '2024-08-15 03:10:00', '阳江核电站', '3', '火灾探测与报警系统',
       '满功率运行', '运行影响', '不必要的设备隔离，影响约2小时',
@@ -519,10 +535,12 @@ seedIfEmpty('event_main', () => {
     insScenario.run(eid, tid, '夜间火灾报警诊断场景', '满功率运行，深夜值班', '夜间值班，人员较少', '火灾报警面板和区域监控', '火灾报警异常响应规程AOP-FIRE-001', '高时间压力，需要快速判断');
     insFactor.run(eid, tid, '压力应激', '时间压力', '高', 2.0, '火灾报警要求快速响应', 'SPAR-H');
     insFactor.run(eid, tid, '适健状态', '疲劳', '降级', 5.0, '凌晨3:10发生，深夜值班疲劳', 'SPAR-H');
+    insEventTag.run(eid, 9, 'approved');
+    insEventTag.run(eid, 3, 'approved');
 
     // ── Event 8
     eid = insEvent.run(
-      'EVT-2024-008', '废液排放过程中放射性浓度监测超标事件',
+      'HF-2026-008', '废液排放过程中放射性浓度监测超标事件',
       '监督失误', '人因事件', '遗漏错误',
       '2024-09-05 14:00:00', '台山核电站', '1', '废液处理系统',
       '满功率运行', '安全相关', '废液排放暂停，环境未受影响',
@@ -530,10 +548,12 @@ seedIfEmpty('event_main', () => {
     ).lastInsertRowid;
 
     insTask.run(eid, 'T-008-01', '废液排放前辐射监测确认', 'action', '准备阶段', '在线辐射监测仪', 'WMP-LR-001 第3.1节', '60分钟', '排放前确认监测仪器校准状态并核对监测数据');
+    insEventTag.run(eid, 1, 'pending');
+    insEventTag.run(eid, 11, 'approved');
 
     // ── Event 9
     eid = insEvent.run(
-      'EVT-2024-009', '换料操作中燃料组件碰擦事件',
+      'HF-2026-009', '换料操作中燃料组件碰擦事件',
       '操作偏差', '人因事件', '执行错误',
       '2024-10-18 08:30:00', '昌江核电站', '1', '燃料装卸系统',
       '换料停堆', '安全相关', '燃料组件轻微表面损伤，经检查可继续使用',
@@ -542,10 +562,12 @@ seedIfEmpty('event_main', () => {
 
     tid = insTask.run(eid, 'T-009-01', '燃料组件转运定位操作', 'action', '换料阶段', '燃料转运装置', 'FHP-TR-001 第5.6节', '不适用', '使用燃料转运装置精确定位和移动燃料组件').lastInsertRowid;
     insFactor.run(eid, tid, '人机界面', '定位系统精度', '低于标准', 10.0, '燃料转运装置定位辅助系统需要升级', 'SPAR-H');
+    insEventTag.run(eid, 5, 'approved');
+    insEventTag.run(eid, 12, 'approved');
 
     // ── Event 10
     eid = insEvent.run(
-      'EVT-2024-010', '安全注入系统定期试验中阀门操作顺序错误事件',
+      'HF-2026-010', '安全注入系统定期试验中阀门操作顺序错误事件',
       '操作失误', '人因事件', '顺序错误',
       '2024-11-22 10:15:00', '防城港核电站', '2', '安全注入系统',
       '满功率运行', '运行影响', '试验中断并重新执行，未影响系统可用性',
@@ -555,6 +577,8 @@ seedIfEmpty('event_main', () => {
     tid = insTask.run(eid, 'T-010-01', '安注系统定期试验阀门操作', 'action', '试验阶段', '安全注入系统阀门', 'STP-SI-012 第4.3节', '120分钟', '按试验规程规定顺序操作安注系统相关阀门').lastInsertRowid;
     insScenario.run(eid, tid, '安注系统定期试验场景', '满功率运行，定期试验', '主控室和就地同步操作', '安注系统操作画面', '安注系统定期试验规程STP-SI-012', '低时间压力但要求操作顺序严格正确');
     insFactor.run(eid, tid, '规程', '规程表述', '中等', 2.0, '试验规程中阀门操作顺序标注不够醒目', 'SPAR-H');
+    insEventTag.run(eid, 3, 'approved');
+    insEventTag.run(eid, 8, 'approved');
 
     // ── Sample Analysis Case
     const caseId = db.prepare(`INSERT INTO analysis_case
